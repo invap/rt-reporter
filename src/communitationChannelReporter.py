@@ -1,11 +1,7 @@
-import os
 import subprocess
 import threading
 import time
 import struct
-from enum import Enum
-
-import wx
 
 from src.reportGenStatus import ReporterGenerationStatus
 
