@@ -21,10 +21,7 @@ class MainReporterWindow(wx.Frame):
         self.main_sizer.Add(self.reporter_panel, 1, wx.EXPAND)
 
         # Establecemos el sizer principal para la ventana
-        self.SetSizer(self.main_sizer)
-
-        # Establecemos el tamaño de la ventana y la mostramos
-        self.SetSize((800, 600))
+        self.SetSizerAndFit(self.main_sizer)
         self.Show()
 
     def on_close(self, event):
@@ -56,22 +53,22 @@ class SetupReporterPanel(wx.Panel):
         self.button_Obj = wx.Button(self, label="Seleccionar archivo fuente a reportar: ")
         self.button_Obj.Bind(wx.EVT_BUTTON, self.select_file)
         self.text_Obj = wx.TextCtrl(self, -1, "", size=(600, -1))
-        self.main_sizer.Add(self.button_Obj, 0, wx.LEFT | wx.TOP, 20)
-        self.main_sizer.Add(self.text_Obj, 0, wx.LEFT | wx.TOP, 10)
-        self.label_Output = wx.StaticText(self, label="Archivo a generar:")
-        self.main_sizer.Add(self.label_Output, 0, wx.LEFT | wx.TOP, 10)
+        self.main_sizer.Add(self.button_Obj, 0, wx.LEFT | wx.TOP | wx.RIGHT, border=10)
+        self.main_sizer.Add(self.text_Obj, 0, wx.LEFT | wx.TOP | wx.RIGHT, border=10)
+        self.label_Output = wx.StaticText(self, label="Report file name:")
+        self.main_sizer.Add(self.label_Output, 0, wx.LEFT | wx.TOP | wx.RIGHT, border=10)
         self.text_Output = wx.TextCtrl(self, -1, "", size=(600, -1))
-        self.main_sizer.Add(self.text_Output, 0, wx.LEFT | wx.TOP, 10)
+        self.main_sizer.Add(self.text_Output, 0, wx.LEFT | wx.TOP | wx.RIGHT, border=10)
         # create the play pause controls
-        self.main_sizer.Add(wx.StaticLine(self), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 20)
+        self.main_sizer.Add(wx.StaticLine(self), 0, wx.EXPAND | wx.TOP, border=20)
         self.play_button = wx.Button(self, label="Start")
         self.stop_button = wx.Button(self, label="Stop")
         self.play_button.Bind(wx.EVT_BUTTON, self.on_start)
         self.stop_button.Bind(wx.EVT_BUTTON, self.on_stop)
         self.run_ctrl_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.run_ctrl_sizer.Add(self.play_button, 0, wx.ALL, 5)
-        self.run_ctrl_sizer.Add(self.stop_button, 0, wx.ALL, 5)
-        self.main_sizer.Add(self.run_ctrl_sizer, 0, wx.CENTER | wx.TOP, 10)
+        self.run_ctrl_sizer.Add(self.play_button, 0, wx.RIGHT, border=15)
+        self.run_ctrl_sizer.Add(self.stop_button, 0)
+        self.main_sizer.Add(self.run_ctrl_sizer, 0, wx.CENTER | wx.TOP | wx.BOTTOM, border=10)
         self.SetSizer(self.main_sizer)
         # create the communication Channel
         self.comm_channel: CommunicationChannelReporter = None
