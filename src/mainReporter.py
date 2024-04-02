@@ -66,11 +66,15 @@ class SetupReporterPanel(wx.Panel):
         self.comm_channel: CommunicationChannelReporter = None
 
     def _set_up_source_file_selection_components(self):
-        self.button_Obj = wx.Button(self,
-                                    label="Seleccionar archivo fuente a reportar: ")
-        self.button_Obj.Bind(wx.EVT_BUTTON, self.select_file)
+        action_label_component = wx.StaticText(self, label="Seleccionar archivo fuente a reportar:")
+        self.main_sizer.Add(action_label_component, 0, wx.LEFT | wx.TOP | wx.RIGHT, border=15)
+
+        folder_icon = wx.ArtProvider.GetBitmap(wx.ART_FOLDER, wx.ART_OTHER, (16, 16))
+        folder_selection_button = wx.BitmapButton(self, bitmap=folder_icon)
+        folder_selection_button.Bind(wx.EVT_BUTTON, self.select_file)
+
         self.text_Obj = wx.TextCtrl(self, -1, "", size=(600, -1))
-        self.main_sizer.Add(self.button_Obj, 0, wx.LEFT | wx.TOP | wx.RIGHT, border=10)
+        self.main_sizer.Add(folder_selection_button, 0, wx.LEFT | wx.TOP | wx.RIGHT, border=10)
         self.main_sizer.Add(self.text_Obj, 0, wx.LEFT | wx.TOP | wx.RIGHT, border=10)
         self.label_Output = wx.StaticText(self, label="Archivo a generar:")
         self.main_sizer.Add(self.label_Output, 0, wx.LEFT | wx.TOP | wx.RIGHT,
