@@ -50,7 +50,7 @@ class SetupReporterPanel(wx.Panel):
         # create visual elements
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         # create Select Object file to report
-        self._set_up_source_file_selection_components()
+        self._set_up_source_file_components()
         # create the play pause controls
         self.main_sizer.Add(wx.StaticLine(self), 0, wx.EXPAND | wx.TOP, border=20)
         self.play_button = wx.Button(self, label="Start")
@@ -65,22 +65,28 @@ class SetupReporterPanel(wx.Panel):
         # create the communication Channel
         self.comm_channel: CommunicationChannelReporter = None
 
-    def _set_up_source_file_selection_components(self):
+    def _set_up_source_file_components(self):
         action_label_component = wx.StaticText(self, label="Seleccionar archivo fuente a reportar:")
         self.main_sizer.Add(action_label_component, 0, wx.LEFT | wx.TOP | wx.RIGHT, border=15)
 
         folder_icon = wx.ArtProvider.GetBitmap(wx.ART_FOLDER, wx.ART_OTHER, (16, 16))
         folder_selection_button = wx.BitmapButton(self, bitmap=folder_icon)
         folder_selection_button.Bind(wx.EVT_BUTTON, self.select_file)
+        self.text_Obj = wx.TextCtrl(self, -1, "", size=(600, 33))
 
-        self.text_Obj = wx.TextCtrl(self, -1, "", size=(600, -1))
-        self.main_sizer.Add(folder_selection_button, 0, wx.LEFT | wx.TOP | wx.RIGHT, border=10)
-        self.main_sizer.Add(self.text_Obj, 0, wx.LEFT | wx.TOP | wx.RIGHT, border=10)
+        folder_selection_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        folder_selection_sizer.Add(self.text_Obj, 0, wx.ALL, border=10)
+        folder_selection_sizer.Add(
+            folder_selection_button, 0, wx.TOP | wx.BOTTOM | wx.RIGHT, border=10
+        )
+
+        self.main_sizer.Add(folder_selection_sizer, 0)
+
         self.label_Output = wx.StaticText(self, label="Archivo a generar:")
         self.main_sizer.Add(self.label_Output, 0, wx.LEFT | wx.TOP | wx.RIGHT,
                             border=10)
-        self.text_Output = wx.TextCtrl(self, -1, "", size=(600, -1))
-        self.main_sizer.Add(self.text_Output, 0, wx.LEFT | wx.TOP | wx.RIGHT, border=10)
+        self.text_Output = wx.TextCtrl(self, -1, "", size=(600, 33))
+        self.main_sizer.Add(self.text_Output, 0, wx.LEFT | wx.TOP | wx.RIGHT | wx.EXPAND, border=10)
 
     def select_file(self, event):
         # Open Dialog
