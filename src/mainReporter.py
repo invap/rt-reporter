@@ -90,7 +90,7 @@ class SetupReporterPanel(wx.Panel):
 
     def select_file(self, event):
         # Open Dialog
-        dialog = wx.FileDialog(self, "Seleccionar archivo a reportar", "", "", "All files (*.*)|*.*",
+        dialog = wx.FileDialog(self, "Select executable file to report", "", "", "All files (*.*)|*.*",
                                wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         if dialog.ShowModal() == wx.ID_OK:
             self.text_Obj.SetLabel(dialog.GetPath())
