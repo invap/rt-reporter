@@ -4,7 +4,7 @@ from src.communitationChannelReporter import CommunicationChannelReporter
 
 class MainReporterWindow(wx.Frame):
     def __init__(self):
-        super().__init__(parent=None, title='INVAP (VESE) - Rerporter')
+        super().__init__(parent=None, title='Runtime reporter')
         self.Bind(wx.EVT_CLOSE, self.on_close)
         # Creamos un divisor para dividir la ventana en dos partes
         # splitter = wx.SplitterWindow(self, -1, style=wx.SP_3DSASH)
@@ -35,7 +35,7 @@ class ReporterPanel(wx.Notebook):
         super().__init__(parent=parent)
         # build the control panel
         self.setup_reporter_panel = SetupReporterPanel(parent=self, main_window=main_window)
-        self.AddPage(self.setup_reporter_panel, 'Configuración')
+        self.AddPage(self.setup_reporter_panel, 'Configuration')
 
 
 class SetupReporterPanel(wx.Panel):
@@ -66,7 +66,7 @@ class SetupReporterPanel(wx.Panel):
         self.comm_channel: CommunicationChannelReporter = None
 
     def _set_up_source_file_components(self):
-        action_label_component = wx.StaticText(self, label="Seleccionar archivo fuente a reportar:")
+        action_label_component = wx.StaticText(self, label="Select executable to report:")
         self.main_sizer.Add(action_label_component, 0, wx.LEFT | wx.TOP | wx.RIGHT, border=15)
 
         folder_icon = wx.ArtProvider.GetBitmap(wx.ART_FOLDER, wx.ART_OTHER, (16, 16))
@@ -82,7 +82,7 @@ class SetupReporterPanel(wx.Panel):
 
         self.main_sizer.Add(folder_selection_sizer, 0)
 
-        self.label_Output = wx.StaticText(self, label="Archivo a generar:")
+        self.label_Output = wx.StaticText(self, label="Report file:")
         self.main_sizer.Add(self.label_Output, 0, wx.LEFT | wx.TOP | wx.RIGHT,
                             border=10)
         self.text_Output = wx.TextCtrl(self, -1, "", size=(600, 33))
@@ -90,7 +90,7 @@ class SetupReporterPanel(wx.Panel):
 
     def select_file(self, event):
         # Open Dialog
-        dialog = wx.FileDialog(self, "Seleccionar archivo a reportar", "", "", "All files (*.*)|*.*",
+        dialog = wx.FileDialog(self, "Select executable to report", "", "", "All files (*.*)|*.*",
                                wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         if dialog.ShowModal() == wx.ID_OK:
             self.text_Obj.SetLabel(dialog.GetPath())
