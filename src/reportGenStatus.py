@@ -1,19 +1,18 @@
 import time
 
 import wx
-import wx.html as html
 
 
 class ReporterGenerationStatus(wx.Frame):
     def __init__(self, parent, generator):
-        super().__init__(None, title="Generación: ",
+        super().__init__(None, title="Reporting: ",
                          style=wx.CAPTION | wx.RESIZE_BORDER)  # TODO take some name of the component
         self.generator_process = generator
         # information's variables to show
         self.__stat_event_workflow_count = 0
         self.__stat_event_hardware_count = 0
         self.__stat_time_elapsed = time.time()
-        # Create an html panel to show the information
+        # Create a html panel to show the information
         txt_style = wx.VSCROLL | wx.HSCROLL | wx.BORDER_SIMPLE
         self.status_text = wx.TextCtrl(self, -1, "", size=(600, -1))
         self.html_sizer = wx.BoxSizer(wx.HORIZONTAL)
