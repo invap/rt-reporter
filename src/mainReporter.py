@@ -35,7 +35,7 @@ class ReporterPanel(wx.Notebook):
         super().__init__(parent=parent)
         # build the control panel
         self.setup_reporter_panel = SetupReporterPanel(parent=self, main_window=main_window)
-        self.AddPage(self.setup_reporter_panel, 'Configuración')
+        self.AddPage(self.setup_reporter_panel, 'Configuration')
 
 
 class SetupReporterPanel(wx.Panel):

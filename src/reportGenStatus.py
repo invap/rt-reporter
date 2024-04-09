@@ -19,29 +19,24 @@ class ReporterGenerationStatus(wx.Frame):
         self.html_sizer.Add(self.status_text)
         self.main_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.Centre()
-        self.status_text.SetLabel("Iniciando...")
+        self.status_text.SetLabel("Initiating...")
         self.timer = wx.CallLater(50, self.on_timer)
         # show
         self.Show()
 
     def on_timer(self):
         self.status_text.SetLabel(
-            f'Tiempo de generación (sec.): {round(time.time() - self.__stat_time_elapsed, 1)}\n' +
-            f'Cantidad de eventos de Workflow: {self.generator_process.get_count()[0]}\n' +
-            f'Cantidad de eventos de Hardware: {self.generator_process.get_count()[1]}\n' +
-            f'Tamaño Archivo: {round(self.generator_process.get_count()[2],1)} MBytes\n'
+            f'Reporting time (sec.): {round(time.time() - self.__stat_time_elapsed, 1)}\n' +
+            f'Timed events count: {self.generator_process.get_count()[0]}\n' +
+            f'State events count: {self.generator_process.get_count()[1]}\n' +
+            f'Component events count: {self.generator_process.get_count()[2]}\n' +
+            f'Workflow events count: {self.generator_process.get_count()[3]}\n' +
+            f'Report file size: {round(self.generator_process.get_count()[2],1)} MBytes\n'
         )
         self.status_text.Refresh()
         self.Refresh()
         self.Update()
         self.timer.Restart(50)
-
-    def html_template(self):
-        return f'Workflow Event Count:{self.__stat_event_workflow_count}'
-        # return f'Información de Generación:\n' \
-        #        f'Workflow Event Count:{self.__stat_event_workflow_count}\n' \
-        #        f'Hardware Event Count: \n {self.__stat_event_hardware_count}\n ' \
-        #        f'Time Elapsed: {self.__stat_time_elapsed} \n'
 
     def close(self):
         self.timer.Stop()
