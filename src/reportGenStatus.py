@@ -11,7 +11,7 @@ class ReporterGenerationStatus(wx.Frame):
         self.generator_process = generator
         # information's variables to show
         self.__stat_event_workflow_count = 0
-        self.__stat_event_hardware_count = 0
+        self.__stat_event_component_count = 0
         self.__stat_time_elapsed = time.time()
         # Create an html panel to show the information
         txt_style = wx.VSCROLL | wx.HSCROLL | wx.BORDER_SIMPLE
