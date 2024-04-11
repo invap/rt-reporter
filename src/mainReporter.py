@@ -4,7 +4,7 @@ from src.communitationChannelReporter import CommunicationChannelReporter
 
 class MainReporterWindow(wx.Frame):
     def __init__(self):
-        super().__init__(parent=None, title='INVAP (VESE) - Rerporter')
+        super().__init__(parent=None, title='Reporter')
         self.Bind(wx.EVT_CLOSE, self.on_close)
         # Creamos un divisor para dividir la ventana en dos partes
         # splitter = wx.SplitterWindow(self, -1, style=wx.SP_3DSASH)
