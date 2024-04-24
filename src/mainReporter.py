@@ -4,7 +4,7 @@ from src.communitationChannelReporter import CommunicationChannelReporter
 
 class MainReporterWindow(wx.Frame):
     def __init__(self):
-        super().__init__(parent=None, title='Runtime reporter')
+        super().__init__(parent=None, title='Reporter')
         self.Bind(wx.EVT_CLOSE, self.on_close)
         # Creamos un divisor para dividir la ventana en dos partes
         # splitter = wx.SplitterWindow(self, -1, style=wx.SP_3DSASH)
@@ -66,7 +66,7 @@ class SetupReporterPanel(wx.Panel):
         self.comm_channel: CommunicationChannelReporter = None
 
     def _set_up_source_file_components(self):
-        action_label_component = wx.StaticText(self, label="Select executable file to report:")
+        action_label_component = wx.StaticText(self, label="Select file to report:")
         self.main_sizer.Add(action_label_component, 0, wx.LEFT | wx.TOP | wx.RIGHT, border=15)
 
         folder_icon = wx.ArtProvider.GetBitmap(wx.ART_FOLDER, wx.ART_OTHER, (16, 16))
@@ -82,7 +82,7 @@ class SetupReporterPanel(wx.Panel):
 
         self.main_sizer.Add(folder_selection_sizer, 0)
 
-        self.label_Output = wx.StaticText(self, label="Event report file:")
+        self.label_Output = wx.StaticText(self, label="Report file name:")
         self.main_sizer.Add(self.label_Output, 0, wx.LEFT | wx.TOP | wx.RIGHT,
                             border=10)
         self.text_Output = wx.TextCtrl(self, -1, "", size=(600, 33))

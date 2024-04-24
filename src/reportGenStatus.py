@@ -27,9 +27,11 @@ class ReporterGenerationStatus(wx.Frame):
     def on_timer(self):
         self.status_text.SetLabel(
             f'Reporting time (sec.): {round(time.time() - self.__stat_time_elapsed, 1)}\n' +
-            f'Workflow events count: {self.generator_process.get_count()[0]}\n' +
-            f'Component events count: {self.generator_process.get_count()[1]}\n' +
-            f'Report size: {round(self.generator_process.get_count()[2],1)} MBytes\n'
+            f'Timed events count: {self.generator_process.get_count()[0]}\n' +
+            f'State events count: {self.generator_process.get_count()[1]}\n' +
+            f'Component events count: {self.generator_process.get_count()[2]}\n' +
+            f'Workflow events count: {self.generator_process.get_count()[3]}\n' +
+            f'Report file size: {round(self.generator_process.get_count()[2],1)} MBytes\n'
         )
         self.status_text.Refresh()
         self.Refresh()
