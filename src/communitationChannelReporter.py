@@ -22,7 +22,7 @@ class CommunicationChannelReporter:
         self.__output_file = open(output_name, 'w')
         # Status
         self.__workflow_events_count = 0
-        self.__hardware_events_count = 0
+        self.__component_events_count = 0
         # create the visualizer
         self.__reportStatus = ReporterGenerationStatus(self, self)
         self.__reportStatus.Show()
@@ -31,7 +31,7 @@ class CommunicationChannelReporter:
         self.__process_thread.start()
 
     def get_count(self):
-        return [self.__workflow_events_count, self.__hardware_events_count, self.__output_file.tell()/1048576]
+        return [self.__workflow_events_count, self.__component_events_count, self.__output_file.tell()/1048576]
 
     def set_delay(self, u_time):
         self.__delay = u_time
@@ -65,8 +65,8 @@ class CommunicationChannelReporter:
                 timestamp = unpacked_data[0]
                 event_type = unpacked_data[1]
                 if event_type == 0:
-                    event_type_name = "hardware_event"
-                    self.__hardware_events_count += 1
+                    event_type_name = "component_event"
+                    self.__component_events_count += 1
                 else:
                     event_type_name = "workflow_event"
                     self.__workflow_events_count += 1
@@ -84,6 +84,6 @@ class CommunicationChannelConf:
     def __init__(self):
         """64K(os default) max string length to call (from the code) a test action (to be executed by the simulator)"""
         self.buffer_size = 65536
-        # 8 (time long) + 4 (enum workflow or hardware) + (1025  | 1025 ) (both have data field with 1024)
+        # 8 (time long) + 4 (enum workflow or component) + (1025  | 1025 ) (both have data field with 1024)
         self.max_pkg_size = 1040
         self.capacity = int(self.buffer_size / self.max_pkg_size)

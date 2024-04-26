@@ -28,20 +28,13 @@ class ReporterGenerationStatus(wx.Frame):
         self.status_text.SetLabel(
             f'Tiempo de generación (sec.): {round(time.time() - self.__stat_time_elapsed, 1)}\n' +
             f'Cantidad de eventos de Workflow: {self.generator_process.get_count()[0]}\n' +
-            f'Cantidad de eventos de Hardware: {self.generator_process.get_count()[1]}\n' +
+            f'Cantidad de eventos de Component: {self.generator_process.get_count()[1]}\n' +
             f'Tamaño Archivo: {round(self.generator_process.get_count()[2],1)} MBytes\n'
         )
         self.status_text.Refresh()
         self.Refresh()
         self.Update()
         self.timer.Restart(50)
-
-    def html_template(self):
-        return f'Workflow Event Count:{self.__stat_event_workflow_count}'
-        # return f'Información de Generación:\n' \
-        #        f'Workflow Event Count:{self.__stat_event_workflow_count}\n' \
-        #        f'Hardware Event Count: \n {self.__stat_event_hardware_count}\n ' \
-        #        f'Time Elapsed: {self.__stat_time_elapsed} \n'
 
     def close(self):
         self.timer.Stop()
