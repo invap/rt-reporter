@@ -89,7 +89,7 @@ class CommunicationChannelReporter:
                         result = str(timestamp) + "," + "component_event" + "," + stripped_data_string
                         self.__output_files["main"].write(result + "\n")
                     case 4:
-                        # "init_event"
+                        # "self-loggable component log_init_event"
                         self.__output_files[stripped_data_string] = open(self.__output_files_path+"/"+stripped_data_string+"_log.txt", "w")
                     case 5:
                         self.__component_events_count += 1
