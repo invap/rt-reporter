@@ -12,10 +12,6 @@ class MainReporterWindow(wx.Frame):
         # Creamos un notebook
         self.reporter_panel = ReporterPanel(parent=self, main_window=self)
 
-        # Establecemos los tamaños de cada panel
-        # splitter.SplitVertically(self.control_panel, self.display_panel, -200)
-        # splitter.SetMinimumPaneSize(20)
-
         # Agregamos los paneles al sizer principal
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.main_sizer.Add(self.reporter_panel, 1, wx.EXPAND)
@@ -39,10 +35,6 @@ class ReporterPanel(wx.Notebook):
 
 
 class SetupReporterPanel(wx.Panel):
-    """
-    The setup panel controls de initial configuration to perform any simulation
-    """
-
     def __init__(self, parent, main_window: wx.Frame):
         super().__init__(parent=parent)
         self.main_window = main_window
@@ -64,6 +56,7 @@ class SetupReporterPanel(wx.Panel):
         self.SetSizer(self.main_sizer)
         # create the communication Channel
         self.comm_channel: CommunicationChannelReporter = None
+        self.text_Path = ""
 
     def _set_up_source_file_components(self):
         action_label_component = wx.StaticText(self, label="Select file to report:")
@@ -79,28 +72,21 @@ class SetupReporterPanel(wx.Panel):
         folder_selection_sizer.Add(
             folder_selection_button, 0, wx.TOP | wx.BOTTOM | wx.RIGHT, border=10
         )
-
         self.main_sizer.Add(folder_selection_sizer, 0)
-
-        self.label_Output = wx.StaticText(self, label="Report file name:")
-        self.main_sizer.Add(self.label_Output, 0, wx.LEFT | wx.TOP | wx.RIGHT,
-                            border=10)
-        self.text_Output = wx.TextCtrl(self, -1, "", size=(600, 33))
-        self.main_sizer.Add(self.text_Output, 0, wx.LEFT | wx.TOP | wx.RIGHT | wx.EXPAND, border=10)
 
     def select_file(self, event):
         # Open Dialog
         dialog = wx.FileDialog(self, "Select executable file to report", "", "", "All files (*.*)|*.*",
                                wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         if dialog.ShowModal() == wx.ID_OK:
-            self.text_Obj.SetLabel(dialog.GetPath())
-            self.text_Output.SetLabel(dialog.GetPath() + "_log.txt")
+            decoded_choice = dialog.GetPath().rsplit("/", 1)
+            self.text_Path = decoded_choice[0]
+            self.text_Obj.SetLabel(decoded_choice[0]+"/"+decoded_choice[1])
         dialog.Destroy()
 
     def on_start(self, event):
         # disable close button TODO
-        files_to_get = [self.text_Obj.GetValue(), self.text_Output.GetValue()]
-        self.comm_channel = CommunicationChannelReporter(files_to_get[0], files_to_get[1])
+        self.comm_channel = CommunicationChannelReporter(self.text_Path, self.text_Obj.GetValue())
         # enable close button TODO
 
     def on_stop(self, event):

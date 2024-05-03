@@ -7,7 +7,7 @@ from src.reportGenStatus import ReporterGenerationStatus
 
 
 class CommunicationChannelReporter:
-    def __init__(self, process_name, output_name):
+    def __init__(self, path, process_name):
         # Load Channel conf
         self.__chn_conf = CommunicationChannelConf()
         # Create a pipe
@@ -18,8 +18,10 @@ class CommunicationChannelReporter:
         self.__stop_event = threading.Event()
         # Start the thread
         self.__delay = 0
-        # Open and clear the output file
-        self.__output_file = open(output_name, 'w')
+        # Store files path
+        self.__output_files_path = path
+        # Open and clear the output files
+        self.__output_files = {"main": open(process_name + "_log.txt", "w")}
         # Status
         self.__timed_events_count = 0
         self.__state_events_count = 0
@@ -33,7 +35,7 @@ class CommunicationChannelReporter:
         self.__process_thread.start()
 
     def get_count(self):
-        return [self.__timed_events_count, self.__state_events_count, self.__workflow_events_count, self.__component_events_count, self.__output_file.tell()/1048576]
+        return [self.__timed_events_count, self.__state_events_count, self.__workflow_events_count, self.__component_events_count]
 
     def set_delay(self, u_time):
         self.__delay = u_time
@@ -48,8 +50,9 @@ class CommunicationChannelReporter:
         self.__process_thread.join(1)
         # kill the subprocess
         self.__channel.terminate()
-        # close the file
-        self.__output_file.close()
+        # close the output files
+        for comp_name in self.__output_files:
+            self.__output_files[comp_name].close()
 
     def __process_incoming_data(self):
         while True:
@@ -66,24 +69,40 @@ class CommunicationChannelReporter:
                 unpacked_data = struct.unpack('qi1028s', pkg[0:])  # long8, enum1, data(1024)
                 timestamp = unpacked_data[0]
                 event_type = unpacked_data[1]
+                data_string = str(unpacked_data[2])[2:]
+                stripped_data_string = data_string[:1020].strip()
                 match event_type:
                     case 0:
-                        event_type_name = "timed_event"
                         self.__timed_events_count += 1
+                        result = str(timestamp) + "," + "timed_event" + "," + stripped_data_string
+                        self.__output_files["main"].write(result + "\n")
                     case 1:
-                        event_type_name = "state_event"
                         self.__state_events_count += 1
+                        result = str(timestamp) + "," + "state_event" + "," + stripped_data_string
+                        self.__output_files["main"].write(result + "\n")
                     case 2:
-                        event_type_name = "component_event"
-                        self.__component_events_count += 1
-                    case 3:
-                        event_type_name = "workflow_event"
                         self.__workflow_events_count += 1
+                        result = str(timestamp) + "," + "workflow_event" + "," + stripped_data_string
+                        self.__output_files["main"].write(result + "\n")
+                    case 3:
+                        self.__component_events_count += 1
+                        result = str(timestamp) + "," + "component_event" + "," + stripped_data_string
+                        self.__output_files["main"].write(result + "\n")
+                    case 4:
+                        # "init_event"
+                        decoded_data_string = stripped_data_string.split(",", 1)
+                        comp_name = decoded_data_string[0]
+                        self.__output_files[comp_name] = open(self.__output_files_path+"/"+decoded_data_string[1], "w")
+                    case 5:
+                        self.__component_events_count += 1
+                        decoded_data_string = stripped_data_string.split(",", 1)
+                        comp_name = decoded_data_string[0]
+                        result = str(timestamp) + "," + decoded_data_string[1]
+                        self.__output_files[comp_name].write(result + "\n")
                     case _:
                         event_type_name = "invalid"
-                data_string = str(unpacked_data[2])[2:]
-                result = str(timestamp) + "," + str(event_type_name) + "," + data_string[:1020].strip()
-                self.__output_file.write(result + "\n")
+                        result = str(timestamp) + "," + str(event_type_name) + "," + stripped_data_string
+                        self.__output_files["main"].write(result + "\n")
                 time.sleep(1 / 100000)
 
 
