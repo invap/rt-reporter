@@ -90,9 +90,7 @@ class CommunicationChannelReporter:
                         self.__output_files["main"].write(result + "\n")
                     case 4:
                         # "init_event"
-                        decoded_data_string = stripped_data_string.split(",", 1)
-                        comp_name = decoded_data_string[0]
-                        self.__output_files[comp_name] = open(self.__output_files_path+"/"+decoded_data_string[1], "w")
+                        self.__output_files[stripped_data_string] = open(self.__output_files_path+"/"+stripped_data_string+"_log.txt", "w")
                     case 5:
                         self.__component_events_count += 1
                         decoded_data_string = stripped_data_string.split(",", 1)
