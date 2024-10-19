@@ -13,7 +13,7 @@ class ReporterGenerationStatus(wx.Frame):
                          style=wx.CAPTION | wx.RESIZE_BORDER)  # TODO take some name of the component
         self.generator_process = generator
         # information's variables to show
-        self.__stat_event_workflow_count = 0
+        self.__stat_event_process_count = 0
         self.__stat_event_component_count = 0
         self.__stat_time_elapsed = time.time()
         # Create a html panel to show the information
@@ -34,7 +34,7 @@ class ReporterGenerationStatus(wx.Frame):
             f'Timed events count: {self.generator_process.get_count()[0]}\n' +
             f'State events count: {self.generator_process.get_count()[1]}\n' +
             f'Component events count: {self.generator_process.get_count()[2]}\n' +
-            f'Workflow events count: {self.generator_process.get_count()[3]}\n' +
+            f'process events count: {self.generator_process.get_count()[3]}\n' +
             f'Report file size: {round(self.generator_process.get_count()[2],1)} MBytes\n'
         )
         self.status_text.Refresh()

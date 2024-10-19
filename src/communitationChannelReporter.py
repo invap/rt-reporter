@@ -29,7 +29,7 @@ class CommunicationChannelReporter:
         # Status
         self.__timed_events_count = 0
         self.__state_events_count = 0
-        self.__workflow_events_count = 0
+        self.__process_events_count = 0
         self.__component_events_count = 0
         # create the visualizer
         self.__reportStatus = ReporterGenerationStatus(self, self)
@@ -39,7 +39,7 @@ class CommunicationChannelReporter:
         self.__process_thread.start()
 
     def get_count(self):
-        return [self.__timed_events_count, self.__state_events_count, self.__workflow_events_count, self.__component_events_count]
+        return [self.__timed_events_count, self.__state_events_count, self.__process_events_count, self.__component_events_count]
 
     def set_delay(self, u_time):
         self.__delay = u_time
@@ -85,8 +85,8 @@ class CommunicationChannelReporter:
                         result = str(timestamp) + "," + "state_event" + "," + stripped_data_string
                         self.__output_files["main"].write(result + "\n")
                     case 2:
-                        self.__workflow_events_count += 1
-                        result = str(timestamp) + "," + "workflow_event" + "," + stripped_data_string
+                        self.__process_events_count += 1
+                        result = str(timestamp) + "," + "process_event" + "," + stripped_data_string
                         self.__output_files["main"].write(result + "\n")
                     case 3:
                         self.__component_events_count += 1
@@ -116,6 +116,6 @@ class CommunicationChannelConf:
     def __init__(self):
         """64K(os default) max string length to call (from the code) a test action (to be executed by the simulator)"""
         self.buffer_size = 65536
-        # 8 (time long) + 4 (enum timed, state, workflow or component) + (1025  | 1025 ) (both have data field with 1024)
+        # 8 (time long) + 4 (enum timed, state, process or component) + (1025  | 1025 ) (both have data field with 1024)
         self.max_pkg_size = 1040
         self.capacity = int(self.buffer_size / self.max_pkg_size)
