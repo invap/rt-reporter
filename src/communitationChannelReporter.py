@@ -25,7 +25,7 @@ class CommunicationChannelReporter:
         # Store files path
         self.__output_files_path = path
         # Open and clear the output files
-        self.__output_files = {"main": open(process_name + "_log.txt", "w")}
+        self.__output_files = {"main": open(process_name + "_log.csv", "w")}
         # Status
         self.__timed_events_count = 0
         self.__state_events_count = 0
@@ -94,7 +94,7 @@ class CommunicationChannelReporter:
                         self.__output_files["main"].write(result + "\n")
                     case 4:
                         # "self-loggable component log_init_event"
-                        self.__output_files[stripped_data_string] = open(self.__output_files_path+"/"+stripped_data_string+"_log.txt", "w")
+                        self.__output_files[stripped_data_string] = open(self.__output_files_path+"/"+stripped_data_string+"_log.csv", "w")
                     case 5:
                         self.__component_events_count += 1
                         decoded_data_string = stripped_data_string.split(",", 1)
