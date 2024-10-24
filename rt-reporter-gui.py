@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR Fundacion-Sadosky-Commercial
 
 import wx
-from src.mainReporter import MainReporterWindow
+from gui.main_reporter_window import MainReporterWindow
 
 
 if __name__ == '__main__':

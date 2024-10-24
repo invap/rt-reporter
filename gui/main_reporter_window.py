@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR Fundacion-Sadosky-Commercial
 
 import wx
-from src.communitationChannelReporter import CommunicationChannelReporter
+from src.reporter_communitation_channel import ReporterCommunicationChannel
 
 
 class MainReporterWindow(wx.Frame):
@@ -59,7 +59,7 @@ class SetupReporterPanel(wx.Panel):
         self.main_sizer.Add(self.run_ctrl_sizer, 0, wx.CENTER | wx.TOP | wx.BOTTOM, border=10)
         self.SetSizer(self.main_sizer)
         # create the communication Channel
-        self.comm_channel: CommunicationChannelReporter = None
+        self.comm_channel: ReporterCommunicationChannel = None
         self.text_Path = ""
 
     def _set_up_source_file_components(self):
@@ -80,7 +80,7 @@ class SetupReporterPanel(wx.Panel):
 
     def select_file(self, event):
         # Open Dialog
-        dialog = wx.FileDialog(self, "Select executable file to report", "", "", "All files (*.*)|*.*",
+        dialog = wx.FileDialog(self, "Select executable to report", "", "", "All files (*.*)|*.*",
                                wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         if dialog.ShowModal() == wx.ID_OK:
             decoded_choice = dialog.GetPath().rsplit("/", 1)
@@ -90,7 +90,7 @@ class SetupReporterPanel(wx.Panel):
 
     def on_start(self, event):
         # disable close button TODO
-        self.comm_channel = CommunicationChannelReporter(self.text_Path, self.text_Obj.GetValue())
+        self.comm_channel = ReporterCommunicationChannel(self.text_Path, self.text_Obj.GetValue())
         # enable close button TODO
 
     def on_stop(self, event):

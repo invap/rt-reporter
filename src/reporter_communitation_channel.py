@@ -7,10 +7,10 @@ import threading
 import time
 import struct
 
-from src.reportGenStatus import ReporterGenerationStatus
+from gui.reporter_generation_status import ReporterGenerationStatus
 
 
-class CommunicationChannelReporter:
+class ReporterCommunicationChannel:
     def __init__(self, path, process_name):
         # Load Channel conf
         self.__chn_conf = CommunicationChannelConf()
