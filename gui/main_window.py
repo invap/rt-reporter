@@ -6,7 +6,7 @@ import wx
 from gui.reporter_communication_channel import ReporterCommunicationChannel
 
 
-class MainReporterWindow(wx.Frame):
+class MainWindow(wx.Frame):
     def __init__(self):
         super().__init__(parent=None, title='Reporter')
         self.Bind(wx.EVT_CLOSE, self.on_close)
