@@ -8,6 +8,7 @@ import time
 import struct
 
 from gui.reporter_generation_status import ReporterGenerationStatus
+from src.communication_channel_conf import CommunicationChannelConf
 
 
 class ReporterCommunicationChannel:
@@ -106,16 +107,3 @@ class ReporterCommunicationChannel:
                         result = str(timestamp) + "," + str(event_type_name) + "," + stripped_data_string
                         self.__output_files["main"].write(result + "\n")
                 time.sleep(1 / 100000)
-
-
-class CommunicationChannelConf:
-    """
-    Information about how the sender packs the data in the channel
-    """
-
-    def __init__(self):
-        """64K(os default) max string length to call (from the code) a test action (to be executed by the simulator)"""
-        self.buffer_size = 65536
-        # 8 (time long) + 4 (enum timed, state, process or component) + (1025  | 1025 ) (both have data field with 1024)
-        self.max_pkg_size = 1040
-        self.capacity = int(self.buffer_size / self.max_pkg_size)
