@@ -24,9 +24,9 @@ class ReporterCommunicationChannel:
         # Start the thread
         self.__delay = 0
         # Store files path
-        self.__output_files_path = path
+        self.__files_path = path
         # Open and clear the output files
-        self.__output_files = {"main": open(process_name + "_log.csv", "w")}
+        self.__event_logs_map = {"main": open(process_name + "_log.csv", "w")}
         # Status
         self.__timed_events_count = 0
         self.__state_events_count = 0
@@ -56,8 +56,8 @@ class ReporterCommunicationChannel:
         # kill the subprocess
         self.__channel.terminate()
         # close the output files
-        for comp_name in self.__output_files:
-            self.__output_files[comp_name].close()
+        for comp_name in self.__event_logs_map:
+            self.__event_logs_map[comp_name].close()
 
     def __process_incoming_data(self):
         while True:
@@ -80,30 +80,30 @@ class ReporterCommunicationChannel:
                     case 0:
                         self.__timed_events_count += 1
                         result = str(timestamp) + "," + "timed_event" + "," + stripped_data_string
-                        self.__output_files["main"].write(result + "\n")
+                        self.__event_logs_map["main"].write(result + "\n")
                     case 1:
                         self.__state_events_count += 1
                         result = str(timestamp) + "," + "state_event" + "," + stripped_data_string
-                        self.__output_files["main"].write(result + "\n")
+                        self.__event_logs_map["main"].write(result + "\n")
                     case 2:
                         self.__process_events_count += 1
                         result = str(timestamp) + "," + "process_event" + "," + stripped_data_string
-                        self.__output_files["main"].write(result + "\n")
+                        self.__event_logs_map["main"].write(result + "\n")
                     case 3:
                         self.__component_events_count += 1
                         result = str(timestamp) + "," + "component_event" + "," + stripped_data_string
-                        self.__output_files["main"].write(result + "\n")
+                        self.__event_logs_map["main"].write(result + "\n")
                     case 4:
                         # "self-loggable component log_init_event"
-                        self.__output_files[stripped_data_string] = open(self.__output_files_path+"/"+stripped_data_string+"_log.csv", "w")
+                        self.__event_logs_map[stripped_data_string] = open(self.__files_path + "/" + stripped_data_string + "_log.csv", "w")
                     case 5:
                         self.__component_events_count += 1
                         decoded_data_string = stripped_data_string.split(",", 1)
                         comp_name = decoded_data_string[0]
                         result = str(timestamp) + "," + decoded_data_string[1]
-                        self.__output_files[comp_name].write(result + "\n")
+                        self.__event_logs_map[comp_name].write(result + "\n")
                     case _:
                         event_type_name = "invalid"
                         result = str(timestamp) + "," + str(event_type_name) + "," + stripped_data_string
-                        self.__output_files["main"].write(result + "\n")
+                        self.__event_logs_map["main"].write(result + "\n")
                 time.sleep(1 / 100000)

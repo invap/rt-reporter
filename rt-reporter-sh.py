@@ -85,7 +85,7 @@ def __process_incoming_data():
 
 def main():
     # Building argument map
-    if len(sys.argv) < 2:
+    if len(sys.argv) != 2:
         print("Erroneous number of arguments.", file=sys.stderr)
         exit(-1)
     try:
@@ -106,11 +106,11 @@ def main():
     # Store files path
     decoded_choice = sys.argv[1].rsplit("/", 1)
     files_path = decoded_choice[0]
-    file_name = decoded_choice[1]
+    process_name = decoded_choice[1]
     # Open and clear the output the main event log file
-    event_logs_map["main"] = open(files_path + "/" + file_name + "_log.csv", "w")
+    event_logs_map["main"] = open(files_path + "/" + process_name + "_log.csv", "w")
     # Create a pipe and stores it globally
-    channel = subprocess.Popen([files_path + "/" + file_name], stdout=subprocess.PIPE)
+    channel = subprocess.Popen([files_path + "/" + process_name], stdout=subprocess.PIPE)
     # Create a new thread to read from the pipe
     process_thread = threading.Thread(target=__process_incoming_data, args=())
     # Start the thread
