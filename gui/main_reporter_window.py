@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR Fundacion-Sadosky-Commercial
 
 import wx
-from src.reporter_communitation_channel import ReporterCommunicationChannel
+from src.reporter_communication_channel import ReporterCommunicationChannel
 
 
 class MainReporterWindow(wx.Frame):
