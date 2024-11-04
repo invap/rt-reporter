@@ -1,11 +1,14 @@
 # Copyright (c) 2024 Fundacion Sadosky, info@fundacionsadosky.org.ar
 # Copyright (c) 2024 INVAP, open@invap.com.ar
 # SPDX-License-Identifier: AGPL-3.0-or-later OR Fundacion-Sadosky-Commercial
+import curses
 import struct
 import subprocess
 import sys
 import threading
 import time
+
+import keyboard
 
 from src.communication_channel_conf import CommunicationChannelConf
 
@@ -26,19 +29,24 @@ chn_conf = CommunicationChannelConf()
 channel = None
 
 
-def __process_incoming_data():
+def _process_incoming_data(stdscr):
     # Declare the use of global variables
     global timed_events_count
     global state_events_count
     global process_events_count
     global component_events_count
     global delay
-    global output_files_path
+    global files_path
     global event_logs_map
     global chn_conf
     global channel
     # Data acquisition
+    stdscr.nodelay(True)  # Don't wait for user input
     while True:
+        # Get key press
+        key = stdscr.getch()
+        if key == ord('s'):
+            break
         buffer = channel.stdout.read(chn_conf.capacity * chn_conf.max_pkg_size)
         pkgs = [buffer[i:i + chn_conf.max_pkg_size] for i in
                 range(0, len(buffer), chn_conf.max_pkg_size)]
@@ -81,9 +89,12 @@ def __process_incoming_data():
                     result = str(timestamp) + "," + str(event_type_name) + "," + stripped_data_string
                     event_logs_map["main"].write(result + "\n")
             time.sleep(1 / 100000)
+    # After the process is stopped event log files must be closed
+    for file in event_logs_map:
+        event_logs_map[file].close()
 
 
-def main():
+def main(stdscr):
     # Building argument map
     if len(sys.argv) != 2:
         print("Erroneous number of arguments.", file=sys.stderr)
@@ -112,10 +123,10 @@ def main():
     # Create a pipe and stores it globally
     channel = subprocess.Popen([files_path + "/" + process_name], stdout=subprocess.PIPE)
     # Create a new thread to read from the pipe
-    process_thread = threading.Thread(target=__process_incoming_data, args=())
+    process_thread = threading.Thread(target=_process_incoming_data, args=[stdscr])
     # Start the thread
     process_thread.start()
 
 
 if __name__ == '__main__':
-    main()
+    curses.wrapper(main)
