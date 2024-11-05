@@ -8,7 +8,7 @@ from gui.reporter_communication_channel import ReporterCommunicationChannel
 
 class MainWindow(wx.Frame):
     def __init__(self):
-        super().__init__(parent=None, title='Reporter')
+        super().__init__(parent=None, title="Reporter")
         self.Bind(wx.EVT_CLOSE, self.on_close)
         # Creamos un divisor para dividir la ventana en dos partes
         # splitter = wx.SplitterWindow(self, -1, style=wx.SP_3DSASH)
@@ -34,8 +34,10 @@ class ReporterPanel(wx.Notebook):
     def __init__(self, parent, main_window: wx.Frame):
         super().__init__(parent=parent)
         # build the control panel
-        self.setup_reporter_panel = SetupReporterPanel(parent=self, main_window=main_window)
-        self.AddPage(self.setup_reporter_panel, 'Configuration')
+        self.setup_reporter_panel = SetupReporterPanel(
+            parent=self, main_window=main_window
+        )
+        self.AddPage(self.setup_reporter_panel, "Configuration")
 
 
 class SetupReporterPanel(wx.Panel):
@@ -56,7 +58,9 @@ class SetupReporterPanel(wx.Panel):
         self.run_ctrl_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.run_ctrl_sizer.Add(self.play_button, 0, wx.RIGHT, border=15)
         self.run_ctrl_sizer.Add(self.stop_button, 0)
-        self.main_sizer.Add(self.run_ctrl_sizer, 0, wx.CENTER | wx.TOP | wx.BOTTOM, border=10)
+        self.main_sizer.Add(
+            self.run_ctrl_sizer, 0, wx.CENTER | wx.TOP | wx.BOTTOM, border=10
+        )
         self.SetSizer(self.main_sizer)
         # create the communication Channel
         self.comm_channel: ReporterCommunicationChannel = None
@@ -64,7 +68,9 @@ class SetupReporterPanel(wx.Panel):
 
     def _set_up_source_file_components(self):
         action_label_component = wx.StaticText(self, label="Select file to report:")
-        self.main_sizer.Add(action_label_component, 0, wx.LEFT | wx.TOP | wx.RIGHT, border=15)
+        self.main_sizer.Add(
+            action_label_component, 0, wx.LEFT | wx.TOP | wx.RIGHT, border=15
+        )
 
         folder_icon = wx.ArtProvider.GetBitmap(wx.ART_FOLDER, wx.ART_OTHER, (16, 16))
         folder_selection_button = wx.BitmapButton(self, bitmap=folder_icon)
@@ -80,17 +86,25 @@ class SetupReporterPanel(wx.Panel):
 
     def select_file(self, event):
         # Open Dialog
-        dialog = wx.FileDialog(self, "Select executable to report", "", "", "All files (*.*)|*.*",
-                               wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+        dialog = wx.FileDialog(
+            self,
+            "Select executable to report",
+            "",
+            "",
+            "All files (*.*)|*.*",
+            wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
+        )
         if dialog.ShowModal() == wx.ID_OK:
             decoded_choice = dialog.GetPath().rsplit("/", 1)
             self.text_Path = decoded_choice[0]
-            self.text_Obj.SetLabel(decoded_choice[0]+"/"+decoded_choice[1])
+            self.text_Obj.SetLabel(decoded_choice[0] + "/" + decoded_choice[1])
         dialog.Destroy()
 
     def on_start(self, event):
         # disable close button TODO
-        self.comm_channel = ReporterCommunicationChannel(self.text_Path, self.text_Obj.GetValue())
+        self.comm_channel = ReporterCommunicationChannel(
+            self.text_Path, self.text_Obj.GetValue()
+        )
         # enable close button TODO
 
     def on_stop(self, event):

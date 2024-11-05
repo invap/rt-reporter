@@ -6,7 +6,7 @@ import wx
 from gui.main_window import MainWindow
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = wx.App()
     mainReporter = MainWindow()
     app.MainLoop()
