@@ -1,19 +1,225 @@
 # The Runtime Reporter
 This project contains an implementation of a Runtime Reporter (RR). The rationale behind this tool is that it captures the events reported by the software under test (SUT) along its execution and saves them in event log files (to be discussed below, in Section [Operation](#operation)), for performing runtime verification using the [Runtime Monitor](https://github.com/invap/rt-monitor/) (RM). This implementation of a reporter tool is conceived for working with programs which output the occurrence of events through appropriate instrumentation with the help of a reporter API (for example, the [C reporter API](https://github.com/invap/c-reporter-api/)).
 
-## Instalation
+
+## Installation
+In this section we will review relevant aspects of how to setup this project, both for developing new features for the RR, and for using it in the runtime verification of other software artifacts.
+
+### Base Python installation
+
+1. Python v.3.12+ (https://www.python.org/)
+2. PIP v.24.3.1+ (https://pip.pypa.io/en/stable/installation/)
+
+### Required libraries
+1. pynput v.1.7.7+
+2. wxPython v.4.2.2+
+
+### Setting up a Python virtual environment
+To create a Python virtual environment, follow these steps:
+
+1. **Open a terminal or command prompt:**
+Start by opening your terminal (on Mac OS or Linux) or Command Prompt/PowerShell (on Windows).
+
+2. **Navigate to your project directory:**
+If you have a specific directory for your project, navigate to it using the cd command:
+```bash
+cd path/to/your/project
+```
+3. **Create a Python virtual environment:**
+Run one of the following commands, depending on your version of Python:
+	- For Python 3.3 and newer:
+	```bash
+	python -m venv env
+	```
+	Replace `env` with whatever name you'd like for your environment folder (common names include venv, .venv, or env).
+	- For Older Versions (Python 2):
+		- You may need to install `virtualenv` first if you're using Python 2:
+		```bash
+		pip install virtualenv
+		```
+		- Then, create the virtual environment with:
+		```bash
+		virtualenv env
+		```
+4. **Activate the virtual environment:**
+To activate the virtual environment, use one of the following commands based on your operating system:
+	- On Mac OS and Linux:
+	```bash
+	source env/bin/activate
+	```
+	- On Windows:
+	```bash
+	.\env\Scripts\activate
+	```
+	Once activated, you’ll see the environment name in parentheses at the beginning of your command prompt.
+5. **Install packages in the virtual environment:**
+With the environment activated, you can now install packages using `pip`, and they’ll be isolated to this environment.
+```bash
+pip install package_name
+```
+Perform this command for each of the packages required (see Section [Required libraries](#required-libraries) above) replacing `package_name` with the name of each package.
+6. **Deactivate the virtual environment:**
+To exit the virtual environment, simply type:
+```bash
+deactivate
+```
+Your environment will remain in the project folder for you to reactivate as needed.
+
+### Libraries and packages
+
+- **Install Python dependencies for running the application:**
+```bash
+pip install -r requirements/running_requirements.txt
+```
+- **Install Python dependencies for developing the application:**
+```bash
+pip install -r requirements/running_requirements.txt
+pip install -r requirements/development_only_requirements.txt
+```
+
+### Linting Python code (with Black)
+A linter in Python is a tool that analyzes your code for potential errors, code quality issues, and stylistic inconsistencies. Linters help enforce a consistent code style and identify common programming mistakes, which can improve the readability and maintainability of your code. They’re especially useful in team environments to maintain coding standards.
+
+Though primarily an auto-formatter, `Black` enforces a consistent code style and handles many linting issues by reformatting your code directly.
+
+1. **Activate the virtual environment in your project directory:**
+2. **Run linter (black):**
+	- For correcting the code:
+	```bash
+	black .
+	```
+	- For checking but not correcting the code:
+	```bash
+	black . --check
+	```
+
+### Perform regression testing
+Tu run the unit tests of the project use the command `python -m unittest discover -s . -t .`.
+
+When executed, it performs Python unit tests with the `unittest` module, utilizing the `discover` feature to automatically find and execute test files.
+- `python -m unittest`:
+Runs the `unittest` module as a script. This is a built-in Python module used for testing. When called with `-m`, it allows you to execute tests directly from the command line.
+- `discover`:
+Tells `unittest` to search for test files automatically. This is useful when you have many test files, as it eliminates the need to specify each test file manually. By default, `unittest` discover will look for files that start with "test" (e.g., `test_example.py`).
+- `-s .`:
+The `-s` option specifies the start directory for test discovery.
+Here, `.` means the current directory, so `unittest` will start looking for tests in the current directory and its subdirectories.
+- `-t .`:
+The `-t` option sets the top-level directory of the project.
+Here, `.` also indicates the current directory. This is mainly useful when the start directory (`-s`) is different from the project's root. For simple projects, the start directory and top-level directory are often the same.
+
+**In summary, this command tells Python’s `unittest` module to:**
+Look in the current directory (`-s .`) for any test files that match the naming pattern `test*.py`.
+Run all the tests it finds, starting from the current directory (`-t .`) and treating it as the top-level directory.
+
+### Build the application as a library
+**ToDo: Polish**
+
+To build a package from the Python project:, you need to structure the project correctly and use tools to bundle it into a distributable format (e.g., a .whl or .tar.gz file) so others can install it easily. Here’s a step-by-step guide to building a Python package:
+
+1. **Structure the project:**
+Organize your project files with a specific structure. Here’s a typical layout:
+```graphql
+my_project/
+├── my_package/                  # Package directory
+│   ├── __init__.py              # Makes this directory a package
+│   ├── module1.py               # Example module
+│   └── module2.py               # Example module
+├── tests/                       # Optional: tests directory
+│   └── test_module1.py
+├── setup.py                     # Contains metadata and build configuration
+├── pyproject.toml               # Configuration file (optional, recommended)
+└── README.md                    # Optional: project README file
+```
+2. **Write the `setup.py` file:**
+The `setup.py` file is the main configuration file for packaging in Python. Here’s a minimal example:
+```python
+from setuptools import setup, find_packages
+```
+```
+setup(
+    name="my_package",                 # Name of your package
+    version="0.1.0",                   # Version of your package
+    author="Your Name",
+    author_email="your.email@example.com",
+    description="A brief description of the package",
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
+    url="https://github.com/yourusername/my_project",  # Project homepage
+    packages=find_packages(),           # Automatically find packages in the directory
+    install_requires=[                  # Dependencies for your package
+        "requests",                     # Example dependency
+    ],
+    classifiers=[                       # Metadata classifiers
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
+    python_requires='>=3.6',            # Minimum Python version
+)
+```
+3. **Add pyproject.toml (Optional but Recommended):**
+The `pyproject.toml` file specifies build requirements and configurations, especially when using tools like setuptools or poetry. Here’s a basic example:
+```toml
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+This configuration tells Python to use setuptools and wheel for building the package.
+```
+4. **Build the package:**
+Now that your configuration files are set, you can build the package using setuptools and wheel.
+	- Install the necessary tools (if not already installed):
+	```bash
+	pip install setuptools wheel
+	```
+	- Run the build command in the root directory (where setup.py is located):
+	```bash
+	python setup.py sdist bdist_wheel
+	```
+	This will create two files in a new dist/ directory:
+		- A source distribution (.tar.gz file)
+		- A wheel distribution (.whl file)
+
+### Install the application as a library locally
+**ToDo**
+
+1. **Build the application as a library:**
+Follow the steps in Section [Build the application as a library](#build-the-application-as-a-library)
+2. **Install the package locally:** 
+Use the command `pip install dist/my_package-0.1.0-py3-none-any.whl`, replacing `my_package-0.1.0-py3-none-any.whl` with the actual filename generated in the dist folder.
+
+### Distribute the application as a library
+**ToDo**
+
+1. **Build the application as a library:**
+Follow the steps in Section [Build the application as a library](#build-the-application-as-a-library)
+2. **Upload the package to PyPI:**
+If you want to make your package publicly available, you can upload it to the Python Package Index (PyPI).
+	- Install twine (a tool for uploading packages):
+	```bash
+	pip install twine
+	```
+	- Upload the package:
+	```bash
+	twine upload dist/*
+	```
+	This command will prompt you to enter your PyPI credentials. Once uploaded, others can install your package with `pip install your-package-name`.
 
 
-### Requirements
-- Python 3.12+
-
-## Operation
+## Usage
 The RR provides the basic functionality; once the SUT is chossen, the former runs the latter within a thread and captures its output pipe for pocessing the events and writing them in the corresponding event log files. The main log file is named `?_log.csv`, where `?` is the name of the SUT; for monitoring purposes this log file must be declared with the reference name "main" in the [event logs map file](https://github.com/invap/rt-monitor/blob/main/README.md#event-logs-map-file "Event logs map file") required by the [RM](https://github.com/invap/rt-monitor "Runtime Monitor") to execute the verification. The event log files produced by the self-loggable components receive their name from the name declared in the self-loggable component log initialization event, suffixed with `_log.csv`.
 
 The SUT is assume to be instrumented for ouputing a stream of predefined event types packed in appropriate package types. Event types are defined in agreement between the RR and the reporter API; in our case, the definition can be seen in [Line 49](https://github.com/invap/c-reporter-api/blob/main/include/data_channel_defs.h#L49 "Event types") of file [`data_channel_defs.h`](https://github.com/invap/c-reporter-api/blob/main/include/data_channel_defs.h) as a C enumerated type:
 ```c
 //classification of the different types of events
-typedef enum {timed_event, state_event, process_event, component_event, self_loggable_component_log_init_event, self_loggable_component_event} eventType;
+typedef enum {
+	timed_event, 
+	state_event, 
+	process_event, 
+	component_event, 
+	self_loggable_component_log_init_event, 
+	self_loggable_component_event
+} eventType;
 ```
 which are naturally recognized as integers by the code fragment from [Line 78](https://github.com/invap/rt-reporter/blob/main/reporter_communication_channel.py#L78) to [Line 107](https://github.com/invap/rt-reporter/blob/main/reporter_communication_channel.py#L107) where appropriate action is taken for each type of event, according to the association {(0, `timed_event`), (1, `state_event`), (2, `process_event`), (3, `component_event`), (4, `self_loggable_component_log_init_event`), (5, `self_loggable_component_event`)}. 
 Each event type arrives packed in a package type corresponding to the event it contains, as they are defined in the code fragment from [Line 18](https://github.com/invap/rt-monitor-example-app/blob/main/buggy%20app/main.c#L18) to [Line 46](https://github.com/invap/rt-monitor-example-app/blob/main/buggy%20app/main.c#L46) of in the file [`data_channel_defs.c`](https://github.com/invap/c-reporter-api/blob/main/include/data_channel_defs.h).
@@ -49,7 +255,7 @@ The graphical user interface for the RR is very simple, it is launched by typing
 After clicking in the folder icon on the right of the text box, the file selection window will open (shown in [Figure 2](#file-selection-window)) and will allow to chose the executable file whose events will be recorded.
 
 <figure id="file-selection-window" style="text-align: center;">
-  <img src="./README_images/main_window.png" width="600" alt="File selection window of the GUI of the RR.">
+  <img src="./README_images/file_selector_window.png" width="600" alt="File selection window of the GUI of the RR.">
   <figcaption style="font-style: italic;"><b>Figure 2</b>: File selection window of the GUI of the RR.
   </figcaption>
 </figure>
