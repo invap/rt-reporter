@@ -66,16 +66,26 @@ The command line interface for the RR is very simple, it is invoked by typing `p
 
 The interface keeps itself listening to the keyboard; pressing the letter `s` stops the execution of the SUT, closes the event log files and exits the command line interface of the RR.
 
-### Requirements
-- Linux / Mac OS: because it relies on `curses` for detecting the event of pressing the key `s`.
-
 An alternative implementation for Windows-based systems can be developed using `msvcrt`.
 
 ### Errors
 This section shows a list of errors that can be yielded by the command line interface:
 - Error -1, "Erroneous number of arguments.": the command line interface expects exactly one parameter that is taken as the SUT to be reported; if it is passed zero or more than 1 parameter this error is yielded.
 - Error -2: "File not found.": the command line interface expects the only parameter passed to be a file containing the SUT to be reported; if it is not present, this error is yielded.
- 
+
+In Mac OS the execution of the RR migth output the message "This process is not trusted! Input event monitoring will not be possible until it is added to accessibility clients.". This happens when an application attempts to monitor keyboard or mouse input without having the necessary permissions because Mac OS restricts access to certain types of input monitoring for security and privacy reasons. To solve it you need to grant accessibility permissions to the application running the program (e.g., Terminal, iTerm2, or a Python IDE). Here’s how:
+1. Open System Preferences:
+	- Go to **Apple menu** --> **System Preferences** --> **Security & Privacy**.
+2. Go to Accessibility Settings:
+	- In the **Privacy** tab, select **Accessibility** from the list on the left.
+3. Add Your Application:
+	- If you are running the RR from **Terminal**, **iTerm2**, or a specific **IDE** (like PyCharm or VS Code), you will need to add that application to the list of allowed applications.
+	- Click the **lock icon** at the bottom left and enter your password to make changes.
+	- Then, click the `+` button, navigate to the application (e.g., Terminal or Python IDE), and add it to the list.
+4. Restart the Application:
+	- After adding it to the Accessibility list, restart the application to apply the new permissions.
+Once you’ve done this, the message should go away, and pynput should be able to detect keyboard and mouse events properly.
+
 
 ## License
 

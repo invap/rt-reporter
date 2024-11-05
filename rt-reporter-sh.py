@@ -8,7 +8,7 @@ import sys
 import threading
 import time
 
-import keyboard
+from pynput import keyboard
 
 from src.communication_channel_conf import CommunicationChannelConf
 
@@ -27,9 +27,30 @@ event_logs_map = {}
 chn_conf = CommunicationChannelConf()
 # Communication channel
 channel = None
+# Stop event for finishing the reporting process
+stop_event = False
 
 
-def _process_incoming_data(stdscr):
+def on_press(key, listener):
+    global stop_event
+    try:
+        # Check if the key has a `char` attribute (printable key)
+        if key.char == 's':
+            stop_event = True
+            listener.stop()
+    except AttributeError:
+        # Handle special keys (like ctrl, alt, etc.) here if needed
+        pass
+
+
+# Function to start a listener in a separate thread
+def wait_for_key_non_blocking():
+    listener = keyboard.Listener(on_press=lambda key: on_press(key, listener))
+    listener.start()
+    listener.join()
+
+
+def _process_incoming_data():
     # Declare the use of global variables
     global timed_events_count
     global state_events_count
@@ -40,13 +61,12 @@ def _process_incoming_data(stdscr):
     global event_logs_map
     global chn_conf
     global channel
+    global stop_event
+    # Start the listener in a separate thread
+    key_thread = threading.Thread(target=wait_for_key_non_blocking)
+    key_thread.start()
     # Data acquisition
-    stdscr.nodelay(True)  # Don't wait for user input
-    while True:
-        # Get key press
-        key = stdscr.getch()
-        if key == ord('s'):
-            break
+    while not stop_event:
         buffer = channel.stdout.read(chn_conf.capacity * chn_conf.max_pkg_size)
         pkgs = [buffer[i:i + chn_conf.max_pkg_size] for i in
                 range(0, len(buffer), chn_conf.max_pkg_size)]
@@ -94,7 +114,7 @@ def _process_incoming_data(stdscr):
         event_logs_map[file].close()
 
 
-def main(stdscr):
+def main():
     # Building argument map
     if len(sys.argv) != 2:
         print("Erroneous number of arguments.", file=sys.stderr)
@@ -123,10 +143,9 @@ def main(stdscr):
     # Create a pipe and stores it globally
     channel = subprocess.Popen([files_path + "/" + process_name], stdout=subprocess.PIPE)
     # Create a new thread to read from the pipe
-    process_thread = threading.Thread(target=_process_incoming_data, args=[stdscr])
-    # Start the thread
+    process_thread = threading.Thread(target=_process_incoming_data, args=[])
     process_thread.start()
 
 
 if __name__ == '__main__':
-    curses.wrapper(main)
+    main()
