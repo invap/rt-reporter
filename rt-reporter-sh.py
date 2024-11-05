@@ -21,7 +21,7 @@ component_events_count = 0
 delay = 0
 # Store files path
 files_path = str()
-# Declares event log files ductionary
+# Declares event log files dictionary
 event_logs_map = {}
 # Channel configuration
 chn_conf = CommunicationChannelConf()
