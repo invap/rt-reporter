@@ -10,10 +10,6 @@ In this section we will review relevant aspects of how to setup this project, bo
 1. Python v.3.12+ (https://www.python.org/)
 2. PIP v.24.3.1+ (https://pip.pypa.io/en/stable/installation/)
 
-### Required libraries
-1. pynput v.1.7.7+
-2. wxPython v.4.2.2+
-
 ### Setting up a Python virtual environment
 To create a Python virtual environment, follow these steps:
 
@@ -76,6 +72,29 @@ pip install -r requirements/running_requirements.txt
 pip install -r requirements/running_requirements.txt
 pip install -r requirements/development_only_requirements.txt
 ```
+- **Content of [`requirements/running_requirements.txt`](https://github.com/invap/rt-reporter/blob/main/requirements/running_requirements.txt):**
+	- pip==24.3.1
+	- pynput==1.7.7
+	- pyobjc-core==10.3.1
+	- pyobjc-framework-ApplicationServices==10.3.1
+	- pyobjc-framework-Cocoa==10.3.1
+	- pyobjc-framework-CoreText==10.3.1
+	- pyobjc-framework-Quartz==10.3.1
+	- six==1.16.0
+	- wxPython==4.2.2
+- **Content of [`requirements/development_only_requirements.txt`](https://github.com/invap/rt-reporter/blob/main/requirements/development_only_requirements.txt):**
+	- black==24.10.0
+	- click==8.1.7
+	- mypy-extensions==1.0.0
+	- packaging==24.1
+	- pathspec==0.12.1
+	- platformdirs==4.3.6
+	- certifi==2024.8.30
+	- charset-normalizer==3.4.0
+	- idna==3.10
+	- requests==2.32.3
+	- urllib3==2.2.3
+	- setuptools==75.3.0
 
 ### Linting Python code (with Black)
 A linter in Python is a tool that analyzes your code for potential errors, code quality issues, and stylistic inconsistencies. Linters help enforce a consistent code style and identify common programming mistakes, which can improve the readability and maintainability of your code. They’re especially useful in team environments to maintain coding standards.
@@ -93,7 +112,7 @@ Though primarily an auto-formatter, `Black` enforces a consistent code style and
 	black . --check
 	```
 
-### Perform regression testing
+### Testing the implementation
 Tu run the unit tests of the project use the command `python -m unittest discover -s . -t .`.
 
 When executed, it performs Python unit tests with the `unittest` module, utilizing the `discover` feature to automatically find and execute test files.
@@ -113,84 +132,97 @@ Look in the current directory (`-s .`) for any test files that match the naming 
 Run all the tests it finds, starting from the current directory (`-t .`) and treating it as the top-level directory.
 
 ### Build the application as a library
-**ToDo: Polish**
-
-To build a package from the Python project:, you need to structure the project correctly and use tools to bundle it into a distributable format (e.g., a .whl or .tar.gz file) so others can install it easily. Here’s a step-by-step guide to building a Python package:
+To build a package from the Python project follow these steps:
 
 1. **Structure the project:**
-Organize your project files with a specific structure. Here’s a typical layout:
+The RR project is organized as follows:
 ```graphql
-my_project/
-├── my_package/                  # Package directory
-│   ├── __init__.py              # Makes this directory a package
-│   ├── module1.py               # Example module
-│   └── module2.py               # Example module
-├── tests/                       # Optional: tests directory
-│   └── test_module1.py
-├── setup.py                     # Contains metadata and build configuration
-├── pyproject.toml               # Configuration file (optional, recommended)
-└── README.md                    # Optional: project README file
+rt-reporter/
+├── gui/                                  # Graphical user interface components
+│   ├── main_window.py                         # Main window of the GUI
+│   ├── reporter_communication_channel.py      # Main module for lauching the SUT and building the event logs
+│   └── reporter_generation_status.py          # Status windows showing the event generation information
+├── README_images/                        # Images for the read me file
+│   ├── file_selector_window.png               # File selector window capture
+│   └── main_window.png                        # Main window capture
+├── requirements                          # Package requirements of the project
+│   ├── development_requirements.txt           # Package requirements for development 
+│   └── development_requirements.txt           # Package requirements for running
+├── src/                                  # Common components graphical and command line interfaces 
+│   └── communication_channel_conf.py          # Information for configuring the communication channel
+├── COPYING                               # Licence of the project 
+├── pyproject.toml                        # Configuration file (optional, recommended)
+├── README.md                             # Read me file of the project
+├── rt-reporter-gui                       # Entry point of the GUI of the RR
+├── rt-reporter-sh                        # Entry point of the command line interface of the RR
+└── setup.py                              # Metadata and build configuration
 ```
-2. **Write the `setup.py` file:**
-The `setup.py` file is the main configuration file for packaging in Python. Here’s a minimal example:
+
+2. **The [`setup.py`](https://github.com/invap/rt-reporter/blob/main/setup.py) file:**
+The [`setup.py`](https://github.com/invap/rt-reporter/blob/main/setup.py) file is the main configuration file for packaging in Python. See the content of the file below:
 ```python
 from setuptools import setup, find_packages
-```
-```
+
+
+def read_requirements(file):
+    with open(file, 'r') as f:
+        return f.read().splitlines()
+
+
 setup(
-    name="my_package",                 # Name of your package
-    version="0.1.0",                   # Version of your package
-    author="Your Name",
-    author_email="your.email@example.com",
-    description="A brief description of the package",
+    name="rt-reporter",
+    version="0.1.0",
+    author="Carlos Gustavo Lopez Pombo",
+    author_email="clpombo@gmail.com",
+    description="An implementation of an instrumentation-based runtime event reporter.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/my_project",  # Project homepage
-    packages=find_packages(),           # Automatically find packages in the directory
-    install_requires=[                  # Dependencies for your package
-        "requests",                     # Example dependency
-    ],
-    classifiers=[                       # Metadata classifiers
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
+    url="https://github.com/invap/rt-reporter/",
+    packages=find_packages(),
+    install_requires=read_requirements("./requirements/running_requirements.txt") + read_requirements("requirements/development_only_requirements.txt"),
+    classifiers=[
+        "Development status :: 4 - Beta",
+        "Intended Audience :: Developers",
+        "Programming Language :: Python :: 3.12",
+        "License :: OSI Approved :: GNU Affero General Public License v3 or later",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',            # Minimum Python version
+    python_requires='>=3.12',
 )
 ```
-3. **Add pyproject.toml (Optional but Recommended):**
-The `pyproject.toml` file specifies build requirements and configurations, especially when using tools like setuptools or poetry. Here’s a basic example:
+
+3. **Add [`pyproject.toml`](https://github.com/invap/rt-reporter/blob/main/pyproject.toml) (Optional but Recommended):**
+The [`pyproject.toml`](https://github.com/invap/rt-reporter/blob/main/pyproject.toml) file specifies build requirements and configurations, especially when using tools like setuptools or poetry. Here’s a basic example:
 ```toml
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
-This configuration tells Python to use setuptools and wheel for building the package.
 ```
+This configuration tells Python to use `setuptools` and `wheel` for building the package.
+
 4. **Build the package:**
 Now that your configuration files are set, you can build the package using setuptools and wheel.
-	- Install the necessary tools (if not already installed):
-	```bash
-	pip install setuptools wheel
-	```
-	- Run the build command in the root directory (where setup.py is located):
-	```bash
-	python setup.py sdist bdist_wheel
-	```
-	This will create two files in a new dist/ directory:
-		- A source distribution (.tar.gz file)
-		- A wheel distribution (.whl file)
+- Install the necessary tools (if not already installed):
+```bash
+pip install setuptools wheel
+```
+- Run the build command in the root directory (where setup.py is located):
+```bash
+python setup.py sdist bdist_wheel
+```
+This will create two files in a new dist/ directory:
+- A source distribution (.tar.gz file)
+- A wheel distribution (.whl file)
 
 ### Install the application as a library locally
-**ToDo**
-
+Follow the steps below for installing the RR as a local library:
 1. **Build the application as a library:**
 Follow the steps in Section [Build the application as a library](#build-the-application-as-a-library)
 2. **Install the package locally:** 
 Use the command `pip install dist/my_package-0.1.0-py3-none-any.whl`, replacing `my_package-0.1.0-py3-none-any.whl` with the actual filename generated in the dist folder.
 
 ### Distribute the application as a library
-**ToDo**
-
+Follow the steps below for distributing the RR as a library in PyPI:
 1. **Build the application as a library:**
 Follow the steps in Section [Build the application as a library](#build-the-application-as-a-library)
 2. **Upload the package to PyPI:**
@@ -206,7 +238,7 @@ If you want to make your package publicly available, you can upload it to the Py
 	This command will prompt you to enter your PyPI credentials. Once uploaded, others can install your package with `pip install your-package-name`.
 
 
-## Usage
+## Relevant information about the implementation
 The RR provides the basic functionality; once the SUT is chossen, the former runs the latter within a thread and captures its output pipe for pocessing the events and writing them in the corresponding event log files. The main log file is named `?_log.csv`, where `?` is the name of the SUT; for monitoring purposes this log file must be declared with the reference name "main" in the [event logs map file](https://github.com/invap/rt-monitor/blob/main/README.md#event-logs-map-file "Event logs map file") required by the [RM](https://github.com/invap/rt-monitor "Runtime Monitor") to execute the verification. The event log files produced by the self-loggable components receive their name from the name declared in the self-loggable component log initialization event, suffixed with `_log.csv`.
 
 The SUT is assume to be instrumented for ouputing a stream of predefined event types packed in appropriate package types. Event types are defined in agreement between the RR and the reporter API; in our case, the definition can be seen in [Line 49](https://github.com/invap/c-reporter-api/blob/main/include/data_channel_defs.h#L49 "Event types") of file [`data_channel_defs.h`](https://github.com/invap/c-reporter-api/blob/main/include/data_channel_defs.h) as a C enumerated type:
@@ -242,8 +274,8 @@ resume(&reporting_clk);
 - case 5: in this case `[event]` has the shape `[component name],[component event]', thus the reporter writes the line "[timestamp],[component event]" in the event log file corresponding to `[component name]`, and
 - in any other case: records the line "[timestamp],invalid,[event]" in file corresponding to the main event log file.
 
-
-## GUI interface
+## Usage
+### GUI interface
 The graphical user interface for the RR is very simple, it is launched by typing `python rt-reporter-gui` which will open de main window of the GUI of the RR, shown in [Figure 1](#main-window).
 
 <figure id="main-window" style="text-align: center;">
@@ -267,14 +299,14 @@ The `Stop` button at the bottom of [Figure 2](#file_selection_window) stops the 
 Closing the window exits the GUI of the RR. 
 
 
-## Command line interface
+### Command line interface
 The command line interface for the RR is very simple, it is invoked by typing `python rt-reporter-sh [SUT full path]` and it will run the SUT producing the corresponding event log files in the same location where the SUT is, according to the indicated in `[SUT full path]`.
 
 The interface keeps itself listening to the keyboard; pressing the letter `s` stops the execution of the SUT, closes the event log files and exits the command line interface of the RR.
 
 An alternative implementation for Windows-based systems can be developed using `msvcrt`.
 
-### Errors
+#### Errors
 This section shows a list of errors that can be yielded by the command line interface:
 - Error -1, "Erroneous number of arguments.": the command line interface expects exactly one parameter that is taken as the SUT to be reported; if it is passed zero or more than 1 parameter this error is yielded.
 - Error -2: "File not found.": the command line interface expects the only parameter passed to be a file containing the SUT to be reported; if it is not present, this error is yielded.
