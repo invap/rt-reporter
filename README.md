@@ -83,18 +83,36 @@ pip install -r requirements/development_only_requirements.txt
 	- six==1.16.0
 	- wxPython==4.2.2
 - **Content of [`requirements/development_only_requirements.txt`](https://github.com/invap/rt-reporter/blob/main/requirements/development_only_requirements.txt):**
+	- Pygments==2.18.0
 	- black==24.10.0
-	- click==8.1.7
-	- mypy-extensions==1.0.0
-	- packaging==24.1
-	- pathspec==0.12.1
-	- platformdirs==4.3.6
 	- certifi==2024.8.30
 	- charset-normalizer==3.4.0
+	- click==8.1.7
+	- docutils==0.21.2
 	- idna==3.10
+	- importlib_metadata==8.5.0
+	- jaraco.classes==3.4.0
+	- jaraco.context==6.0.1
+	- jaraco.functools==4.1.0
+	- keyring==25.5.0
+	- markdown-it-py==3.0.0
+	- mdurl==0.1.2
+	- more-itertools==10.5.0
+	- mypy-extensions==1.0.0
+	- nh3==0.2.18
+	- packaging==24.1
+	- pathspec==0.12.1
+	- pkginfo==1.10.0
+	- platformdirs==4.3.6
+	- readme_renderer==44.0
 	- requests==2.32.3
-	- urllib3==2.2.3
+	- requests-toolbelt==1.0.0
+	- rfc3986==2.0.0
+	- rich==13.9.4
 	- setuptools==75.3.0
+	- twine==5.1.1
+	- urllib3==2.2.3
+	- zipp==3.20.2
 
 ### Linting Python code (with Black)
 A linter in Python is a tool that analyzes your code for potential errors, code quality issues, and stylistic inconsistencies. Linters help enforce a consistent code style and identify common programming mistakes, which can improve the readability and maintainability of your code. They’re especially useful in team environments to maintain coding standards.
@@ -192,7 +210,7 @@ setup(
 ```
 
 3. **Add [`pyproject.toml`](https://github.com/invap/rt-reporter/blob/main/pyproject.toml) (Optional but Recommended):**
-The [`pyproject.toml`](https://github.com/invap/rt-reporter/blob/main/pyproject.toml) file specifies build requirements and configurations, especially when using tools like setuptools or poetry. Here’s a basic example:
+The [`pyproject.toml`](https://github.com/invap/rt-reporter/blob/main/pyproject.toml) file specifies build requirements and configurations, especially when using tools like setuptools or poetry. See the content of the file below:
 ```toml
 [build-system]
 requires = ["setuptools", "wheel"]
@@ -211,15 +229,15 @@ pip install setuptools wheel
 python setup.py sdist bdist_wheel
 ```
 This will create two files in a new dist/ directory:
-- A source distribution (.tar.gz file)
-- A wheel distribution (.whl file)
+- A source distribution: [rt_reporter-0.1.0.tar.gz](https://github.com/invap/rt-reporter/blob/main/dist/rt_reporter-0.1.0.tar.gz)
+- A wheel distribution: [rt_reporter-0.1.0-py3-none-any.whl](https://github.com/invap/rt-reporter/blob/main/dist/rt_reporter-0.1.0-py3-none-any.whl)
 
 ### Install the application as a library locally
 Follow the steps below for installing the RR as a local library:
 1. **Build the application as a library:**
 Follow the steps in Section [Build the application as a library](#build-the-application-as-a-library)
 2. **Install the package locally:** 
-Use the command `pip install dist/my_package-0.1.0-py3-none-any.whl`, replacing `my_package-0.1.0-py3-none-any.whl` with the actual filename generated in the dist folder.
+Use the command `pip install dist/rt_reporter-0.1.0-py3-none-any.whl`.
 
 ### Distribute the application as a library
 Follow the steps below for distributing the RR as a library in PyPI:
