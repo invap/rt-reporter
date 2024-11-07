@@ -305,7 +305,7 @@ The graphical user interface for the RR is very simple, it is launched by typing
 After clicking in the folder icon on the right of the text box, the file selection window will open (shown in [Figure 2](#file-selection-window)) and will allow to chose the executable file whose events will be recorded.
 
 <figure id="file-selection-window" style="text-align: center;">
-  <img src="./README_images/file_selector_window.png" width="600" alt="File selection window of the GUI of the RR.">
+  <img src="./README_images/file_selection_window.png" width="600" alt="File selection window of the GUI of the RR.">
   <figcaption style="font-style: italic;"><b>Figure 2</b>: File selection window of the GUI of the RR.
   </figcaption>
 </figure>
