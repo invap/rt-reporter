@@ -10,8 +10,6 @@ class MainWindow(wx.Frame):
     def __init__(self):
         super().__init__(parent=None, title="Reporter")
         self.Bind(wx.EVT_CLOSE, self.on_close)
-        # Creamos un divisor para dividir la ventana en dos partes
-        # splitter = wx.SplitterWindow(self, -1, style=wx.SP_3DSASH)
 
         # Creamos un notebook
         self.reporter_panel = ReporterPanel(parent=self, main_window=self)
@@ -34,6 +32,7 @@ class ReporterPanel(wx.Notebook):
     def __init__(self, parent, main_window: wx.Frame):
         super().__init__(parent=parent)
         # build the control panel
+        self.executable_chosen = False
         self.setup_reporter_panel = SetupReporterPanel(
             parent=self, main_window=main_window
         )
@@ -43,27 +42,28 @@ class ReporterPanel(wx.Notebook):
 class SetupReporterPanel(wx.Panel):
     def __init__(self, parent, main_window: wx.Frame):
         super().__init__(parent=parent)
+        self.parent = parent
         self.main_window = main_window
-        self.comm_channel = None  # generated on play
+        self.comm_channel = None  # ReporterCommunicationChannel generated on play
         # create visual elements
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         # create Select Object file to report
         self._set_up_source_file_components()
         # create the play pause controls
         self.main_sizer.Add(wx.StaticLine(self), 0, wx.EXPAND | wx.TOP, border=20)
-        self.play_button = wx.Button(self, label="Start")
+        self.start = wx.Button(self, label="Start")
+        self.start.Bind(wx.EVT_BUTTON, self.on_start)
+        self._disable_start_button()
         self.stop_button = wx.Button(self, label="Stop")
-        self.play_button.Bind(wx.EVT_BUTTON, self.on_start)
         self.stop_button.Bind(wx.EVT_BUTTON, self.on_stop)
+        self._disable_stop_button()
         self.run_ctrl_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.run_ctrl_sizer.Add(self.play_button, 0, wx.RIGHT, border=15)
+        self.run_ctrl_sizer.Add(self.start, 0, wx.RIGHT, border=15)
         self.run_ctrl_sizer.Add(self.stop_button, 0)
         self.main_sizer.Add(
             self.run_ctrl_sizer, 0, wx.CENTER | wx.TOP | wx.BOTTOM, border=10
         )
         self.SetSizer(self.main_sizer)
-        # create the communication Channel
-        self.comm_channel: ReporterCommunicationChannel = None
         self.text_Path = ""
 
     def _set_up_source_file_components(self):
@@ -95,18 +95,36 @@ class SetupReporterPanel(wx.Panel):
             wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
         )
         if dialog.ShowModal() == wx.ID_OK:
+            # Accommodate buttons and pause event to the current state
+            self._enable_start_button()
             decoded_choice = dialog.GetPath().rsplit("/", 1)
             self.text_Path = decoded_choice[0]
             self.text_Obj.SetLabel(decoded_choice[0] + "/" + decoded_choice[1])
         dialog.Destroy()
+
+    def on_stop(self, event):
+        self.comm_channel.stop()
+        self._enable_start_button()
+        self._disable_stop_button()
+        # enable close button TODO
 
     def on_start(self, event):
         # disable close button TODO
         self.comm_channel = ReporterCommunicationChannel(
             self.text_Path, self.text_Obj.GetValue()
         )
+        self._disable_start_button()
+        self._enable_stop_button()
         # enable close button TODO
 
-    def on_stop(self, event):
-        self.comm_channel.stop()
-        # enable close button TODO
+    def _enable_start_button(self):
+        wx.CallAfter(self.start.Enable)
+
+    def _disable_start_button(self):
+        wx.CallAfter(self.start.Disable)
+
+    def _disable_stop_button(self):
+        wx.CallAfter(self.stop_button.Disable)
+
+    def _enable_stop_button(self):
+        wx.CallAfter(self.stop_button.Enable)
