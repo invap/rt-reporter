@@ -16,8 +16,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/invap/rt-reporter/",
     packages=find_packages(),
-    install_requires=read_requirements("./requirements/running_requirements.txt")
-    + read_requirements("requirements/development_only_requirements.txt"),
+    install_requires=read_requirements("./requirements.txt"),
     classifiers=[
         "Development status :: 4 - Beta",
         "Intended Audience :: Developers",

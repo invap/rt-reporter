@@ -7,7 +7,6 @@ import subprocess
 import sys
 import threading
 import time
-
 from pynput import keyboard
 
 from src.communication_channel_conf import CommunicationChannelConf

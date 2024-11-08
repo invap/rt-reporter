@@ -10,14 +10,11 @@ class MainWindow(wx.Frame):
     def __init__(self):
         super().__init__(parent=None, title="Reporter")
         self.Bind(wx.EVT_CLOSE, self.on_close)
-
         # Creamos un notebook
         self.reporter_panel = ReporterPanel(parent=self, main_window=self)
-
         # Agregamos los paneles al sizer principal
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.main_sizer.Add(self.reporter_panel, 1, wx.EXPAND)
-
         # Establecemos el sizer principal para la ventana
         self.SetSizerAndFit(self.main_sizer)
         self.Show()

@@ -63,56 +63,51 @@ Your environment will remain in the project folder for you to reactivate as need
 
 ### Libraries and packages
 
-- **Install Python dependencies for running the application:**
+- **Install Python dependencies for the application:**
 ```bash
-pip install -r requirements/running_requirements.txt
+pip install -r requirements.txt
 ```
-- **Install Python dependencies for developing the application:**
-```bash
-pip install -r requirements/running_requirements.txt
-pip install -r requirements/development_only_requirements.txt
-```
-- **Content of [`requirements/running_requirements.txt`](https://github.com/invap/rt-reporter/blob/main/requirements/running_requirements.txt):**
-	- pip==24.3.1
-	- pynput==1.7.7
-	- pyobjc-core==10.3.1
-	- pyobjc-framework-ApplicationServices==10.3.1
-	- pyobjc-framework-Cocoa==10.3.1
-	- pyobjc-framework-CoreText==10.3.1
-	- pyobjc-framework-Quartz==10.3.1
-	- six==1.16.0
-	- wxPython==4.2.2
-- **Content of [`requirements/development_only_requirements.txt`](https://github.com/invap/rt-reporter/blob/main/requirements/development_only_requirements.txt):**
-	- Pygments==2.18.0
-	- black==24.10.0
-	- certifi==2024.8.30
-	- charset-normalizer==3.4.0
-	- click==8.1.7
-	- docutils==0.21.2
-	- idna==3.10
-	- importlib_metadata==8.5.0
-	- jaraco.classes==3.4.0
-	- jaraco.context==6.0.1
-	- jaraco.functools==4.1.0
-	- keyring==25.5.0
-	- markdown-it-py==3.0.0
-	- mdurl==0.1.2
-	- more-itertools==10.5.0
-	- mypy-extensions==1.0.0
-	- nh3==0.2.18
-	- packaging==24.1
-	- pathspec==0.12.1
-	- pkginfo==1.10.0
-	- platformdirs==4.3.6
-	- readme_renderer==44.0
-	- requests==2.32.3
-	- requests-toolbelt==1.0.0
-	- rfc3986==2.0.0
-	- rich==13.9.4
-	- setuptools==75.3.0
-	- twine==5.1.1
-	- urllib3==2.2.3
-	- zipp==3.20.2
+- **Content of [`requirements.txt`](https://github.com/invap/rt-reporter/blob/main/requirements.txt):**
+	- Pygments~=2.18.0
+	- black~=24.10.0
+	- certifi~=2024.8.30
+	- charset-normalizer~=3.4.0
+	- click~=8.1.7
+	- docutils~=0.21.2
+	- idna~=3.10
+	- importlib_metadata~=8.5.0
+	- jaraco.classes~=3.4.0
+	- jaraco.context~=6.0.1
+	- jaraco.functools~=4.1.0
+	- keyring~=25.5.0
+	- markdown-it-py~=3.0.0
+	- mdurl~=0.1.2
+	- more-itertools~=10.5.0
+	- mypy-extensions~=1.0.0
+	- nh3~=0.2.18
+	- packaging~=24.1
+	- pathspec~=0.12.1
+	- pip~=24.3.1
+	- pkginfo~=1.10.0
+	- platformdirs~=4.3.6
+	- pynput~=1.7.7
+	- pyobjc-core~=10.3.1
+	- pyobjc-framework-ApplicationServices~=10.3.1
+	- pyobjc-framework-Cocoa~=10.3.1
+	- pyobjc-framework-CoreText~=10.3.1
+	- pyobjc-framework-Quartz~=10.3.1
+	- readme_renderer~=44.0
+	- requests~=2.32.3
+	- requests-toolbelt~=1.0.0
+	- rfc3986~=2.0.0
+	- rich~=13.9.4
+	- setuptools~=75.3.0
+	- six~=1.16.0
+	- twine~=5.1.1
+	- urllib3~=2.2.3
+	- wxPython~=4.2.2
+	- zipp~=3.20.2
+
 
 ### Linting Python code (with Black)
 A linter in Python is a tool that analyzes your code for potential errors, code quality issues, and stylistic inconsistencies. Linters help enforce a consistent code style and identify common programming mistakes, which can improve the readability and maintainability of your code. They’re especially useful in team environments to maintain coding standards.
@@ -163,14 +158,12 @@ rt-reporter/
 ├── README_images/                        # Images for the read me file
 │   ├── file_selector_window.png               # File selector window capture
 │   └── main_window.png                        # Main window capture
-├── requirements                          # Package requirements of the project
-│   ├── development_requirements.txt           # Package requirements for development 
-│   └── development_requirements.txt           # Package requirements for running
 ├── src/                                  # Common components graphical and command line interfaces 
 │   └── communication_channel_conf.py          # Information for configuring the communication channel
 ├── COPYING                               # Licence of the project 
 ├── pyproject.toml                        # Configuration file (optional, recommended)
 ├── README.md                             # Read me file of the project
+├── requirements.txt                      # Package requirements of the project
 ├── rt-reporter-gui                       # Entry point of the GUI of the RR
 ├── rt-reporter-sh                        # Entry point of the command line interface of the RR
 └── setup.py                              # Metadata and build configuration
@@ -197,7 +190,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/invap/rt-reporter/",
     packages=find_packages(),
-    install_requires=read_requirements("./requirements/running_requirements.txt") + read_requirements("requirements/development_only_requirements.txt"),
+    install_requires=read_requirements("./requirements.txt"),
     classifiers=[
         "Development status :: 4 - Beta",
         "Intended Audience :: Developers",
