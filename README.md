@@ -152,8 +152,8 @@ The RR project is organized as follows:
 ```graphql
 rt-reporter/
 ├── gui/                                  # Graphical user interface components
-│   ├── main_window.py                         # Main window of the GUI
-│   └── reporter_generation_status.py          # Status windows showing the event generation information
+│   ├── generation_status_window.py            # Status windows showing the event generation information
+│   └── main_window.py                         # Main window of the GUI
 ├── README_images/                        # Images for the read me file
 │   ├── file_selector_window.png               # File selector window capture
 │   └── main_window.png                        # Main window capture

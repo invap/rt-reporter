@@ -5,7 +5,7 @@ import threading
 
 import wx
 from src.communication_channel import CommunicationChannel
-from gui.reporter_generation_status import ReporterGenerationStatus
+from gui.generation_status_window import GenerationStatusWindow
 
 
 class MainWindow(wx.Frame):
@@ -129,7 +129,7 @@ class SetupReporterPanel(wx.Panel):
         # Starts the acquisition thread.
         application_thread.start()
         # Create visual status window.
-        self._reportStatus = ReporterGenerationStatus(acquirer.get_count)
+        self._reportStatus = GenerationStatusWindow(acquirer.get_count)
         self._reportStatus.Show()
         # enable close button TODO
 

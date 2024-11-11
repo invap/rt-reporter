@@ -7,7 +7,7 @@ import time
 import wx
 
 
-class ReporterGenerationStatus(wx.Frame):
+class GenerationStatusWindow(wx.Frame):
     def __init__(self, event_count_function):
         super().__init__(
             None, title="Reporting: ", style=wx.CAPTION | wx.RESIZE_BORDER
