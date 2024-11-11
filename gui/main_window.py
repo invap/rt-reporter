@@ -1,9 +1,11 @@
 # Copyright (c) 2024 Fundacion Sadosky, info@fundacionsadosky.org.ar
 # Copyright (c) 2024 INVAP, open@invap.com.ar
 # SPDX-License-Identifier: AGPL-3.0-or-later OR Fundacion-Sadosky-Commercial
+import threading
 
 import wx
-from gui.reporter_communication_channel import ReporterCommunicationChannel
+from src.reporter_communication_channel import ReporterCommunicationChannel
+from gui.reporter_generation_status import ReporterGenerationStatus
 
 
 class MainWindow(wx.Frame):
@@ -41,7 +43,10 @@ class SetupReporterPanel(wx.Panel):
         super().__init__(parent=parent)
         self.parent = parent
         self.main_window = main_window
-        self.comm_channel = None  # ReporterCommunicationChannel generated on play
+        self._comm_channel = None  # ReporterCommunicationChannel generated on START
+        self._reportStatus = None  # Status window generated on START
+        # Event for controlling the thread
+        self._stop_event = threading.Event()
         # create visual elements
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         # create Select Object file to report
@@ -64,7 +69,7 @@ class SetupReporterPanel(wx.Panel):
         self.text_Path = ""
 
     def _set_up_source_file_components(self):
-        action_label_component = wx.StaticText(self, label="Select file to report:")
+        action_label_component = wx.StaticText(self, label="Select executable to report:")
         self.main_sizer.Add(
             action_label_component, 0, wx.LEFT | wx.TOP | wx.RIGHT, border=15
         )
@@ -100,19 +105,43 @@ class SetupReporterPanel(wx.Panel):
         dialog.Destroy()
 
     def on_stop(self, event):
-        self.comm_channel.stop()
+        # Adjust visual interface according to STOP.
         self._enable_start_button()
         self._disable_stop_button()
+        self._stop_event.set()
+        # Close the status window.
+        self._reportStatus.close()
         # enable close button TODO
 
     def on_start(self, event):
         # disable close button TODO
-        self.comm_channel = ReporterCommunicationChannel(
+        # Creates the thread for the communication channel.
+        acquirer = ReporterCommunicationChannel(
             self.text_Path, self.text_Obj.GetValue()
         )
+        # Creates a thread for controlling the acquisition process
+        application_thread = threading.Thread(
+            target=self._run_acquisition, args=[acquirer]
+        )
+        # Adjust visual interface according to START.
         self._disable_start_button()
         self._enable_stop_button()
+        # Starts the acquisition thread.
+        application_thread.start()
+        # Create visual status window.
+        self._reportStatus = ReporterGenerationStatus(acquirer.get_count)
+        self._reportStatus.Show()
         # enable close button TODO
+
+    def _run_acquisition(self, process_thread):
+        # Configure the monitor by setting up control event.
+        process_thread.set_event(self._stop_event)
+        # Events setup for managing the running mode.
+        self._stop_event.clear()
+        # Starts the acquisition thread.
+        process_thread.start()
+        # Waiting for the verification process to finish, either naturally or manually.
+        process_thread.join()
 
     def _enable_start_button(self):
         wx.CallAfter(self.start.Enable)
@@ -120,8 +149,8 @@ class SetupReporterPanel(wx.Panel):
     def _disable_start_button(self):
         wx.CallAfter(self.start.Disable)
 
-    def _disable_stop_button(self):
-        wx.CallAfter(self.stop_button.Disable)
-
     def _enable_stop_button(self):
         wx.CallAfter(self.stop_button.Enable)
+
+    def _disable_stop_button(self):
+        wx.CallAfter(self.stop_button.Disable)

@@ -8,15 +8,12 @@ import wx
 
 
 class ReporterGenerationStatus(wx.Frame):
-    def __init__(self, parent, generator):
+    def __init__(self, event_count_function):
         super().__init__(
             None, title="Reporting: ", style=wx.CAPTION | wx.RESIZE_BORDER
         )  # TODO take some name of the component
-        self.generator_process = generator
-        # information's variables to show
-        self.__stat_event_process_count = 0
-        self.__stat_event_component_count = 0
-        self.__stat_time_elapsed = time.time()
+        self._event_count_function = event_count_function
+        self._stat_time_elapsed = time.time()
         # Create a html panel to show the information
         txt_style = wx.VSCROLL | wx.HSCROLL | wx.BORDER_SIMPLE
         self.status_text = wx.TextCtrl(self, -1, "", size=(600, -1))
@@ -31,12 +28,12 @@ class ReporterGenerationStatus(wx.Frame):
 
     def on_timer(self):
         self.status_text.SetLabel(
-            f"Reporting time (sec.): {round(time.time() - self.__stat_time_elapsed, 1)}\n"
-            + f"Timed events count: {self.generator_process.get_count()[0]}\n"
-            + f"State events count: {self.generator_process.get_count()[1]}\n"
-            + f"Component events count: {self.generator_process.get_count()[2]}\n"
-            + f"process events count: {self.generator_process.get_count()[3]}\n"
-            + f"Report file size: {round(self.generator_process.get_count()[2],1)} MBytes\n"
+            f"Reporting time (sec.): {round(time.time() - self._stat_time_elapsed, 1)}\n"
+            + f"Timed events count: {self._event_count_function()[0]}\n"
+            + f"State events count: {self._event_count_function()[1]}\n"
+            + f"Component events count: {self._event_count_function()[2]}\n"
+            + f"process events count: {self._event_count_function()[3]}\n"
+            + f"Report file size: {round(self._event_count_function()[2],1)} MBytes\n"
         )
         self.status_text.Refresh()
         self.Refresh()
