@@ -30,7 +30,7 @@ class CommunicationChannel(threading.Thread):
     def set_event(self, stop_event):
         self._stop_event = stop_event
 
-    def get_count(self):
+    def get_event_count(self):
         return [
             self._timed_events_count,
             self._state_events_count,

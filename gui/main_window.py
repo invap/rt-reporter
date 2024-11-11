@@ -129,7 +129,7 @@ class SetupReporterPanel(wx.Panel):
         # Starts the acquisition thread.
         application_thread.start()
         # Create visual status window.
-        self._reportStatus = GenerationStatusWindow(acquirer.get_count)
+        self._reportStatus = GenerationStatusWindow(acquirer.get_event_count)
         self._reportStatus.Show()
         # enable close button TODO
 
