@@ -153,13 +153,13 @@ The RR project is organized as follows:
 rt-reporter/
 ├── gui/                                  # Graphical user interface components
 │   ├── main_window.py                         # Main window of the GUI
-│   ├── reporter_communication_channel.py      # Main module for lauching the SUT and building the event logs
 │   └── reporter_generation_status.py          # Status windows showing the event generation information
 ├── README_images/                        # Images for the read me file
 │   ├── file_selector_window.png               # File selector window capture
 │   └── main_window.png                        # Main window capture
 ├── src/                                  # Common components graphical and command line interfaces 
-│   └── communication_channel_conf.py          # Information for configuring the communication channel
+│   ├── communication_channel_conf.py          # Information for configuring the communication channel
+│   └── reporter_communication_channel.py      # Main module for lauching the SUT and building the event logs
 ├── COPYING                               # Licence of the project 
 ├── pyproject.toml                        # Configuration file (optional, recommended)
 ├── README.md                             # Read me file of the project
