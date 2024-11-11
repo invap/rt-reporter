@@ -4,7 +4,7 @@
 import threading
 
 import wx
-from src.reporter_communication_channel import ReporterCommunicationChannel
+from src.communication_channel import CommunicationChannel
 from gui.reporter_generation_status import ReporterGenerationStatus
 
 
@@ -43,7 +43,7 @@ class SetupReporterPanel(wx.Panel):
         super().__init__(parent=parent)
         self.parent = parent
         self.main_window = main_window
-        self._comm_channel = None  # ReporterCommunicationChannel generated on START
+        self._comm_channel = None  # CommunicationChannel generated on START
         self._reportStatus = None  # Status window generated on START
         # Event for controlling the thread
         self._stop_event = threading.Event()
@@ -116,7 +116,7 @@ class SetupReporterPanel(wx.Panel):
     def on_start(self, event):
         # disable close button TODO
         # Creates the thread for the communication channel.
-        acquirer = ReporterCommunicationChannel(
+        acquirer = CommunicationChannel(
             self.text_Path, self.text_Obj.GetValue()
         )
         # Creates a thread for controlling the acquisition process

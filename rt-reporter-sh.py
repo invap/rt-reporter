@@ -8,7 +8,7 @@ import threading
 from pynput import keyboard
 
 from src.communication_channel_conf import CommunicationChannelConf
-from src.reporter_communication_channel import ReporterCommunicationChannel
+from src.communication_channel import CommunicationChannel
 
 # Stop event for finishing the reporting process
 stop_event = threading.Event()
@@ -55,7 +55,7 @@ def main():
     files_path = decoded_choice[0]
     process_name = decoded_choice[0] + "/" + decoded_choice[1]
     # Creates the thread for the communication channel.
-    acquirer = ReporterCommunicationChannel(
+    acquirer = CommunicationChannel(
         files_path, process_name
     )
     # Create a new thread to read from the pipe

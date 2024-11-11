@@ -10,7 +10,7 @@ import struct
 from src.communication_channel_conf import CommunicationChannelConf
 
 
-class ReporterCommunicationChannel(threading.Thread):
+class CommunicationChannel(threading.Thread):
     def __init__(self, files_path, process_name):
         super().__init__()
         # Event for controlling the execution of the monitor (TBS by set_event)
