@@ -33,7 +33,7 @@ class GenerationStatusWindow(wx.Frame):
             + f"State events count: {self._event_count_function()[1]}\n"
             + f"Component events count: {self._event_count_function()[2]}\n"
             + f"process events count: {self._event_count_function()[3]}\n"
-            + f"Report file size: {round(self._event_count_function()[2],1)} MBytes\n"
+            + f"Report file size: {round(self._event_count_function()[2], 1)} MBytes\n"
         )
         self.status_text.Refresh()
         self.Refresh()
