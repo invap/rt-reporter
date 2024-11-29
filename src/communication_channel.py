@@ -61,12 +61,12 @@ class CommunicationChannel(threading.Thread):
                     break
                 # Process the sequence of bytes and dump the information to the file
                 unpacked_data = struct.unpack(
-                    "qi1028s", pkg[0:]
-                )  # long8, enum1, data(1024)
+                    "QI1012s", pkg[0:]
+                )  # long8, enum1, data(1010)
                 timestamp = unpacked_data[0]
                 event_type = unpacked_data[1]
                 data_string = str(unpacked_data[2])[2:]
-                stripped_data_string = data_string[:1020].strip()
+                stripped_data_string = data_string[:1010].strip()
                 match event_type:
                     case 0:
                         self._timed_events_count += 1
