@@ -62,7 +62,7 @@ class CommunicationChannel(threading.Thread):
                 # Process the sequence of bytes and dump the information to the file
                 unpacked_data = struct.unpack(
                     "QI1012s", pkg[0:]
-                )  # long8, enum1, data(1010)
+                )  # unsigned long long: 8, unsigned long: 4, string: 1012
                 timestamp = unpacked_data[0]
                 event_type = unpacked_data[1]
                 data_string = str(unpacked_data[2])[2:]
@@ -132,8 +132,8 @@ class CommunicationChannel(threading.Thread):
                         event_logs_map["main"].write(result + "\n")
                 time.sleep(1 / 100000)
         # Close the channel and terminates the subprocess.
-        channel.stdout.close()
         channel.terminate()
+        channel.stdout.close()
         # close the output files
         for comp_name in event_logs_map:
             event_logs_map[comp_name].close()
