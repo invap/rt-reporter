@@ -2,3 +2,4 @@
 /rt_reporter.egg-info/
 /build/
 /dist/
+/poetry.lock
