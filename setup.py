@@ -11,7 +11,7 @@ setup(
     version="0.1.0",
     author="Carlos Gustavo Lopez Pombo",
     author_email="clpombo@gmail.com",
-    description="An implementation of an instrumentation-based runtime event reporter.",
+    description="This project contains an implementation of a Runtime Reporter (RR). The rationale behind this tool is that it captures the events reported by the software under test (SUT) along its execution and saves them in event log files (to be discussed below, in Section [Operation](#operation)), for performing runtime verification using the [Runtime Monitor](https://github.com/invap/rt-monitor/) (RM). This implementation of a reporter tool is conceived for working with programs which output the occurrence of events through appropriate instrumentation with the help of a reporter API (for example, the [C reporter API](https://github.com/invap/c-reporter-api/)).",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/invap/rt-reporter/",

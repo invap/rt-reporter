@@ -9,12 +9,13 @@ In this section we will review relevant aspects of how to setup this project, bo
 
 1. Python v.3.12+ (https://www.python.org/)
 2. PIP v.24.3.1+ (https://pip.pypa.io/en/stable/installation/)
+3. Setup tools v.75.3.0+ / Poetry v.2.1.1+ (https://python-poetry.org)
 
 ### Setting up a Python virtual environment
 To create a Python virtual environment, follow these steps:
 
 1. **Open a terminal or command prompt:**
-Start by opening your terminal (on Mac OS or Linux) or Command Prompt/PowerShell (on Windows).
+Start by opening your terminal (on MacOS or Linux) or Command Prompt/PowerShell (on Windows).
 
 2. **Navigate to your project directory:**
 If you have a specific directory for your project, navigate to it using the cd command:
@@ -165,22 +166,23 @@ To build a package from the Python project follow these steps:
 The RR project is organized as follows:
 ```graphql
 rt-reporter/
-├── gui/                                  # Graphical user interface components
-│   ├── generation_status_window.py            # Status windows showing the event generation information
-│   └── main_window.py                         # Main window of the GUI
-├── README_images/                        # Images for the read me file
-│   ├── file_selector_window.png               # File selector window capture
-│   └── main_window.png                        # Main window capture
-├── src/                                  # Common components graphical and command line interfaces 
-│   ├── communication_channel.py               # Information for configuring the communication channel
-│   └── communication_channel_conf.py          # Main module for lauching the SUT and building the event logs
-├── COPYING                               # Licence of the project 
-├── pyproject.toml                        # Configuration file (optional, recommended)
-├── README.md                             # Read me file of the project
-├── requirements.txt                      # Package requirements of the project
-├── rt-reporter-gui                       # Entry point of the GUI of the RR
-├── rt-reporter-sh                        # Entry point of the command line interface of the RR
-└── setup.py                              # Metadata and build configuration
+├── rt-reporter/                            # Package folder
+│   ├── gui/                                # Graphical user interface components
+│   │   ├── generation_status_window.py     # Status windows showing the event generation information
+│   │   └── main_window.py                  # Main window of the GUI
+│   ├── src/                                # Common components graphical and command line interfaces 
+│   │   ├── communication_channel.py        # Information for configuring the communication channel
+│   │   └── communication_channel_conf.py   # Main module for lauching the SUT and building the event logs
+│   ├── rt-reporter-gui                     # Entry point of the GUI of the RR
+│   └── rt-reporter-sh                      # Entry point of the command line interface of the RR
+├── README_images/                          # Images for the read me file
+│   ├── file_selector_window.png            # File selector window capture
+│   └── main_window.png                     # Main window capture
+├── COPYING                                 # Licence of the project 
+├── pyproject.toml                          # Configuration file (optional, recommended)
+├── README.md                               # Read me file of the project
+├── requirements.txt                        # Package requirements of the project
+└── setup.py                                # Metadata and build configuration
 ```
 
 2. **The [`setup.py`](https://github.com/invap/rt-reporter/blob/main/setup.py) file:**

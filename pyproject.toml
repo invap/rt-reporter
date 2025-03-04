@@ -4,14 +4,14 @@ version = "0.1.0"
 description = "This project contains an implementation of a Runtime Reporter (RR). The rationale behind this tool is that it captures the events reported by the software under test (SUT) along its execution and saves them in event log files (to be discussed below, in Section [Operation](#operation)), for performing runtime verification using the [Runtime Monitor](https://github.com/invap/rt-monitor/) (RM). This implementation of a reporter tool is conceived for working with programs which output the occurrence of events through appropriate instrumentation with the help of a reporter API (for example, the [C reporter API](https://github.com/invap/c-reporter-api/))."
 authors = ["Carlos Gustavo Lopez Pombo <clpombo@gmail.com>"]
 readme = "README.md"
-#license = "MIT"
+license = "GNU AFFERO GENERAL PUBLIC LICENSE Version 3, 19 November 2007"
 #homepage = "https://example.com/my-awesome-project"
-#repository = "https://github.com/example/my-awesome-project"
+repository = "https://github.com/invap/rt-reporter"
 #documentation = "https://example.com/docs"
 
 [[tool.poetry.packages]]
-include = "../rt-reporter"
-from = "../rt-reporter"
+include = "rt-reporter"
+from = "./"
 
 [tool.poetry.dependencies]
 python = ">=3.12"
