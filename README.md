@@ -1,6 +1,29 @@
 # The Runtime Reporter
 This project contains an implementation of a Runtime Reporter (RR). The rationale behind this tool is that it captures the events reported by the software under test (SUT) along its execution and saves them in event log files (to be discussed below, in Section [Operation](#operation)), for performing runtime verification using the [Runtime Monitor](https://github.com/invap/rt-monitor/) (RM). This implementation of a reporter tool is conceived for working with programs which output the occurrence of events through appropriate instrumentation with the help of a reporter API (for example, the [C reporter API](https://github.com/invap/c-reporter-api/)).
 
+## Structure the project
+The RR project is organized as follows:
+```graphql
+rt-reporter/
+├── rt_reporter/                            # Package folder
+│   ├── gui/                                # Graphical user interface components
+│   │   ├── generation_status_window.py     # Status windows showing the event generation information
+│   │   └── main_window.py                  # Main window of the GUI
+│   ├── src/                                # Common components graphical and command line interfaces 
+│   │   ├── communication_channel.py        # Information for configuring the communication channel
+│   │   └── communication_channel_conf.py   # Main module for lauching the SUT and building the event logs
+│   ├── rt_reporter_gui                     # Entry point of the GUI of the RR
+│   └── rt_reporter_sh                      # Entry point of the command line interface of the RR
+├── README_images/                          # Images for the read me file
+│   ├── file_selector_window.png            # File selector window capture
+│   └── main_window.png                     # Main window capture
+├── COPYING                                 # Licence of the project 
+├── pyproject.toml                          # Configuration file (optional, recommended)
+├── README.md                               # Read me file of the project
+├── requirements.txt                        # Package requirements of the project
+└── setup.py                                # Metadata and build configuration
+```
+
 
 ## Installation
 In this section we will review relevant aspects of how to setup this project, both for developing new features for the RR, and for using it in the runtime verification of other software artifacts.
@@ -11,7 +34,8 @@ In this section we will review relevant aspects of how to setup this project, bo
 2. PIP v.24.3.1+ (https://pip.pypa.io/en/stable/installation/)
 3. Setup tools v.75.3.0+ / Poetry v.2.1.1+ (https://python-poetry.org)
 
-### Setting up a Python virtual environment
+
+### Setting up the project manually
 To create a Python virtual environment, follow these steps:
 
 1. **Open a terminal or command prompt:**
@@ -54,75 +78,146 @@ With the environment activated, you can now install packages using `pip`, and th
 ```bash
 pip install package_name
 ```
-Perform this command for each of the packages required (see Section [Required libraries](#required-libraries) above) replacing `package_name` with the name of each package.
-6. **Deactivate the virtual environment:**
+Perform this command for each of the packages required replacing `package_name` with the name of each package in the file [`requirements.txt`](https://github.com/invap/rt-reporter/blob/main/requirements.txt) or just run:
+```bash
+pip install -r requirements.txt
+```
+**Content of [`requirements.txt`](https://github.com/invap/rt-reporter/blob/main/requirements.txt):**
+- Pygments~=2.18.0
+- black~=24.10.0
+- certifi~=2024.8.30
+- charset-normalizer~=3.4.0
+- click~=8.1.7
+- docutils~=0.21.2
+- idna~=3.10
+- importlib_metadata~=8.5.0
+- jaraco.classes~=3.4.0
+- jaraco.context~=6.0.1
+- jaraco.functools~=4.1.0
+- keyring~=25.5.0
+- markdown-it-py~=3.0.0
+- mdurl~=0.1.2
+- more-itertools~=10.5.0
+- mypy-extensions~=1.0.0
+- nh3~=0.2.18
+- packaging~=24.1
+- pathspec~=0.12.1
+- pip~=24.3.1
+- pkginfo~=1.10.0
+- platformdirs~=4.3.6
+- pynput~=1.7.7
+- pyobjc-core~=10.3.1
+- pyobjc-framework-ApplicationServices~=10.3.1
+- pyobjc-framework-Cocoa~=10.3.1
+- pyobjc-framework-CoreText~=10.3.1
+- pyobjc-framework-Quartz~=10.3.1
+- readme_renderer~=44.0
+- requests~=2.32.3
+- requests-toolbelt~=1.0.0
+- rfc3986~=2.0.0
+- rich~=13.9.4
+- setuptools~=75.3.0
+- six~=1.16.0
+- twine~=5.1.1
+- urllib3~=2.2.3
+- wxPython~=4.2.2
+- zipp~=3.20.2
+7. **Do something with RR...**
+8. **Deactivate the virtual environment:**
 To exit the virtual environment, simply type:
 ```bash
 deactivate
 ```
 Your environment will remain in the project folder for you to reactivate as needed.
 
-### Libraries and packages
-
-- **Install Python dependencies for the application:**
-```bash
-pip install -r requirements.txt
-```
-- **Content of [`requirements.txt`](https://github.com/invap/rt-reporter/blob/main/requirements.txt):**
-	- Pygments~=2.18.0
-	- black~=24.10.0
-	- certifi~=2024.8.30
-	- charset-normalizer~=3.4.0
-	- click~=8.1.7
-	- docutils~=0.21.2
-	- idna~=3.10
-	- importlib_metadata~=8.5.0
-	- jaraco.classes~=3.4.0
-	- jaraco.context~=6.0.1
-	- jaraco.functools~=4.1.0
-	- keyring~=25.5.0
-	- markdown-it-py~=3.0.0
-	- mdurl~=0.1.2
-	- more-itertools~=10.5.0
-	- mypy-extensions~=1.0.0
-	- nh3~=0.2.18
-	- packaging~=24.1
-	- pathspec~=0.12.1
-	- pip~=24.3.1
-	- pkginfo~=1.10.0
-	- platformdirs~=4.3.6
-	- pynput~=1.7.7
-	- pyobjc-core~=10.3.1
-	- pyobjc-framework-ApplicationServices~=10.3.1
-	- pyobjc-framework-Cocoa~=10.3.1
-	- pyobjc-framework-CoreText~=10.3.1
-	- pyobjc-framework-Quartz~=10.3.1
-	- readme_renderer~=44.0
-	- requests~=2.32.3
-	- requests-toolbelt~=1.0.0
-	- rfc3986~=2.0.0
-	- rich~=13.9.4
-	- setuptools~=75.3.0
-	- six~=1.16.0
-	- twine~=5.1.1
-	- urllib3~=2.2.3
-	- wxPython~=4.2.2
-	- zipp~=3.20.2
 
 ### Setting up the project using Poetry
-This section contains instructions for setting up the project using [Poetry](https://python-poetry.org)
+This section provide instructions for setting up the project using [Poetry](https://python-poetry.org)
+1. **Install Poetry:** find instructions for your system [here](https://python-poetry.org) 
+2. **Add [`pyproject.toml`](https://github.com/invap/rt-reporter/blob/main/pyproject.toml):** the content of the `pyproject.toml` file needed for setting up the project using poetry is shown below.
+```toml
+[tool.poetry]
+name = "rt-reporter"
+version = "0.1.0"
+description = "This project contains an implementation of a Runtime Reporter (RR). The rationale behind this tool is that it captures the events reported by the software under test (SUT) along its execution and saves them in event log files (to be discussed below, in Section [Operation](#operation)), for performing runtime verification using the [Runtime Monitor](https://github.com/invap/rt-monitor/) (RM). This implementation of a reporter tool is conceived for working with programs which output the occurrence of events through appropriate instrumentation with the help of a reporter API (for example, the [C reporter API](https://github.com/invap/c-reporter-api/))."
+authors = ["Carlos Gustavo Lopez Pombo <clpombo@gmail.com>"]
+readme = "README.md"
+license = "GNU AFFERO GENERAL PUBLIC LICENSE Version 3, 19 November 2007"
+repository = "https://github.com/invap/rt-reporter"
 
-1. **Install Poetry:** Find instructions for your system [here](https://python-poetry.org) 
-2. **Install the project:** To install the Python project using Poetry, navigate to the directory where the project is and run:
-```bash
-poetry install
+[[tool.poetry.packages]]
+include = "rt_reporter"
+from = "./"
+
+[tool.poetry.dependencies]
+python = ">=3.12"
+pygments =">=2.18.0,<2.19.0"
+black =">=24.10.0,<24.11.0"
+certifi =">=2024.8.30,<2024.9.0"
+charset-normalizer =">=3.4.0,<3.5.0"
+click =">=8.1.7,<8.2.0"
+docutils =">=0.21.2,<0.22.0"
+idna =">=3.10,<4.0"
+importlib-metadata =">=8.5.0,<8.6.0"
+jaraco-classes =">=3.4.0,<3.5.0"
+jaraco-context =">=6.0.1,<6.1.0"
+jaraco-functools =">=4.1.0,<4.2.0"
+keyring =">=25.5.0,<25.6.0"
+markdown-it-py =">=3.0.0,<3.1.0"
+mdurl =">=0.1.2,<0.2.0"
+more-itertools =">=10.5.0,<10.6.0"
+mypy-extensions =">=1.0.0,<1.1.0"
+nh3 =">=0.2.18,<0.3.0"
+packaging =">=24.1,<25.0"
+pathspec =">=0.12.1,<0.13.0"
+pip =">=24.3.1,<24.4.0"
+pkginfo =">=1.10.0,<1.11.0"
+platformdirs =">=4.3.6,<4.4.0"
+pynput =">=1.7.7,<1.8.0"
+pyobjc-core =">=10.3.1,<10.4.0"
+pyobjc-framework-applicationservices =">=10.3.1,<10.4.0"
+pyobjc-framework-cocoa =">=10.3.1,<10.4.0"
+pyobjc-framework-coretext =">=10.3.1,<10.4.0"
+pyobjc-framework-quartz =">=10.3.1,<10.4.0"
+readme-renderer =">=44.0,<45.0"
+requests =">=2.32.3,<2.33.0"
+requests-toolbelt =">=1.0.0,<1.1.0"
+rfc3986 =">=2.0.0,<2.1.0"
+rich =">=13.9.4,<13.10.0"
+setuptools =">=75.3.0,<75.4.0"
+six =">=1.16.0,<1.17.0"
+twine =">=5.1.1,<5.2.0"
+urllib3 =">=2.2.3,<2.3.0"
+wxpython =">=4.2.2,<4.3.0"
+zipp =">=3.20.2,<3.21.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 ```
+3. **Install the project:** To install the Python project using Poetry, navigate to the directory where the project is and run:
+   ```bash	
+   poetry install
+   ```
 3. **Activate the virtual environment**: To activate the virtual environment created by the previous command run:
-```bash
-poetry env use [your_python_command]
-poetry env activate
-```
+   ```bash
+   poetry env use [your_python_command]
+   poetry env activate
+   ```
 this will ensure you are using the right Python virtual machine and then, activate the virtual environment.
+
+
+### Using the project with docker
+1. **Build the image:**
+    ```bash
+    docker build . -t rt-reporter-env
+    ```
+2. **Run the container:**
+	```bash
+	docker run -it -v$PWD:/home/workspace rt-reporter-env
+	```
+3. **Do something with RR...**
+
 
 ### Linting Python code (with Black)
 A linter in Python is a tool that analyzes your code for potential errors, code quality issues, and stylistic inconsistencies. Linters help enforce a consistent code style and identify common programming mistakes, which can improve the readability and maintainability of your code. They’re especially useful in team environments to maintain coding standards.
@@ -139,6 +234,7 @@ Though primarily an auto-formatter, `Black` enforces a consistent code style and
 	```bash
 	black . --check
 	```
+
 
 ### Testing the implementation
 Tu run the unit tests of the project use the command `python -m unittest discover -s . -t .`.
@@ -159,34 +255,23 @@ Here, `.` also indicates the current directory. This is mainly useful when the s
 Look in the current directory (`-s .`) for any test files that match the naming pattern `test*.py`.
 Run all the tests it finds, starting from the current directory (`-t .`) and treating it as the top-level directory.
 
-### Build the application as a library
+
+### Build the application as a library with poetry
+To build a package from the Python project follow these steps:
+Now that your configuration files are set, you can build the package using poetry running the build command in the root directory of the project:
+```bash
+poetry build
+```
+This will create two files in a new `dist` directory:
+- A source distribution: [rt_reporter-0.1.0.tar.gz](https://github.com/invap/rt-reporter/blob/main/dist/rt_reporter-0.1.0.tar.gz)
+- A wheel distribution: [rt_reporter-0.1.0-py3-none-any.whl](https://github.com/invap/rt-reporter/blob/main/dist/rt_reporter-0.1.0-py3-none-any.whl)
+
+
+### Build the application as a library with setuptools
 To build a package from the Python project follow these steps:
 
-1. **Structure the project:**
-The RR project is organized as follows:
-```graphql
-rt-reporter/
-├── rt-reporter/                            # Package folder
-│   ├── gui/                                # Graphical user interface components
-│   │   ├── generation_status_window.py     # Status windows showing the event generation information
-│   │   └── main_window.py                  # Main window of the GUI
-│   ├── src/                                # Common components graphical and command line interfaces 
-│   │   ├── communication_channel.py        # Information for configuring the communication channel
-│   │   └── communication_channel_conf.py   # Main module for lauching the SUT and building the event logs
-│   ├── rt-reporter-gui                     # Entry point of the GUI of the RR
-│   └── rt-reporter-sh                      # Entry point of the command line interface of the RR
-├── README_images/                          # Images for the read me file
-│   ├── file_selector_window.png            # File selector window capture
-│   └── main_window.png                     # Main window capture
-├── COPYING                                 # Licence of the project 
-├── pyproject.toml                          # Configuration file (optional, recommended)
-├── README.md                               # Read me file of the project
-├── requirements.txt                        # Package requirements of the project
-└── setup.py                                # Metadata and build configuration
-```
-
-2. **The [`setup.py`](https://github.com/invap/rt-reporter/blob/main/setup.py) file:**
-The [`setup.py`](https://github.com/invap/rt-reporter/blob/main/setup.py) file is the main configuration file for packaging in Python. See the content of the file below:
+1. **The `setup.py` file:**
+the [`setup.py`](https://github.com/invap/rt-reporter/blob/main/setup.py) file is the main configuration file for packaging in Python. See the content of the file below:
 ```python
 from setuptools import setup, find_packages
 
@@ -197,7 +282,7 @@ def read_requirements(file):
 
 
 setup(
-    name="rt-reporter",
+    name="rt_reporter",
     version="0.1.0",
     author="Carlos Gustavo Lopez Pombo",
     author_email="clpombo@gmail.com",
@@ -217,17 +302,15 @@ setup(
     python_requires='>=3.12',
 )
 ```
-
-3. **Add [`pyproject.toml`](https://github.com/invap/rt-reporter/blob/main/pyproject.toml) (Optional but Recommended):**
-The [`pyproject.toml`](https://github.com/invap/rt-reporter/blob/main/pyproject.toml) file specifies build requirements and configurations, especially when using tools like setuptools or poetry. See the content of the file below:
+2. **Add `pyproject.toml` (Optional but Recommended):** 
+the content of the `pyproject.toml` file for building the project using setuptools is shown below:
 ```toml
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 ```
 This configuration tells Python to use `setuptools` and `wheel` for building the package.
-
-4. **Build the package:**
+3. **Build the package:**
 Now that your configuration files are set, you can build the package using setuptools and wheel.
 - Install the necessary tools (if not already installed):
 ```bash
@@ -240,6 +323,7 @@ python setup.py sdist bdist_wheel
 This will create two files in a new dist/ directory:
 - A source distribution: [rt_reporter-0.1.0.tar.gz](https://github.com/invap/rt-reporter/blob/main/dist/rt_reporter-0.1.0.tar.gz)
 - A wheel distribution: [rt_reporter-0.1.0-py3-none-any.whl](https://github.com/invap/rt-reporter/blob/main/dist/rt_reporter-0.1.0-py3-none-any.whl)
+
 
 ### Install the application as a library locally
 Follow the steps below for installing the RR as a local library:
@@ -305,7 +389,7 @@ Other reporter APIs, like the [Rust reporter API](https://github.com/invap/rust_
 
 ## Usage
 ### GUI interface
-The graphical user interface for the RR is very simple, it is launched by typing `python rt-reporter-gui` which will open de main window of the GUI of the RR, shown in [Figure 1](#main-window).
+The graphical user interface for the RR is very simple, it is launched by typing `python rt_reporter_gui` which will open de main window of the GUI of the RR, shown in [Figure 1](#main-window).
 
 <figure id="main-window" style="text-align: center;">
   <img src="./README_images/main_window.png" width="600" alt="The main window of the GUI of the RR.">
@@ -329,7 +413,7 @@ Closing the window exits the GUI of the RR.
 
 
 ### Command line interface
-The command line interface for the RR is very simple, it is invoked by typing `python rt-reporter-sh [SUT full path]` and it will run the SUT producing the corresponding event log files in the same location where the SUT is, according to the indicated in `[SUT full path]`.
+The command line interface for the RR is very simple, it is invoked by typing `python rt_reporter_sh [SUT full path]` and it will run the SUT producing the corresponding event log files in the same location where the SUT is, according to the indicated in `[SUT full path]`.
 
 The interface keeps itself listening to the keyboard; pressing the letter `s` stops the execution of the SUT, closes the event log files and exits the command line interface of the RR.
 

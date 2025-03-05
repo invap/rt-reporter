@@ -7,7 +7,7 @@ def read_requirements(file):
 
 
 setup(
-    name="rt-reporter",
+    name="rt_reporter",
     version="0.1.0",
     author="Carlos Gustavo Lopez Pombo",
     author_email="clpombo@gmail.com",

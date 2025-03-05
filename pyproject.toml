@@ -5,12 +5,10 @@ description = "This project contains an implementation of a Runtime Reporter (RR
 authors = ["Carlos Gustavo Lopez Pombo <clpombo@gmail.com>"]
 readme = "README.md"
 license = "GNU AFFERO GENERAL PUBLIC LICENSE Version 3, 19 November 2007"
-#homepage = "https://example.com/my-awesome-project"
 repository = "https://github.com/invap/rt-reporter"
-#documentation = "https://example.com/docs"
 
 [[tool.poetry.packages]]
-include = "rt-reporter"
+include = "rt_reporter"
 from = "./"
 
 [tool.poetry.dependencies]
@@ -55,3 +53,6 @@ urllib3 =">=2.2.3,<2.3.0"
 wxpython =">=4.2.2,<4.3.0"
 zipp =">=3.20.2,<3.21.0"
 
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
