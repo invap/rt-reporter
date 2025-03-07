@@ -31,8 +31,8 @@ class GenerationStatusWindow(wx.Frame):
             f"Reporting time (sec.): {round(time.time() - self._stat_time_elapsed, 1)}\n"
             + f"Timed events count: {self._event_count_function()[0]}\n"
             + f"State events count: {self._event_count_function()[1]}\n"
-            + f"Component events count: {self._event_count_function()[2]}\n"
-            + f"process events count: {self._event_count_function()[3]}\n"
+            + f"Process events count: {self._event_count_function()[2]}\n"
+            + f"Component events count: {self._event_count_function()[3]}\n"
             + f"Report file size: {round(self._event_count_function()[2], 1)} MBytes\n"
         )
         self.status_text.Refresh()

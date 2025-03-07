@@ -7,7 +7,7 @@ import threading
 import time
 import struct
 
-from src.communication_channel_conf import CommunicationChannelConf
+from rt_reporter.src.communication_channel_conf import CommunicationChannelConf
 
 
 class CommunicationChannel(threading.Thread):

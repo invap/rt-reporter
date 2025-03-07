@@ -2,13 +2,11 @@
 # Copyright (c) 2024 INVAP, open@invap.com.ar
 # SPDX-License-Identifier: AGPL-3.0-or-later OR Fundacion-Sadosky-Commercial
 
-import subprocess
 import sys
 import threading
 from pynput import keyboard
 
-from src.communication_channel_conf import CommunicationChannelConf
-from src.communication_channel import CommunicationChannel
+from rt_reporter.src.communication_channel import CommunicationChannel
 
 # Stop event for finishing the reporting process
 stop_event = threading.Event()

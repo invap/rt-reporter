@@ -4,8 +4,8 @@
 import threading
 
 import wx
-from src.communication_channel import CommunicationChannel
-from gui.generation_status_window import GenerationStatusWindow
+from rt_reporter.src.communication_channel import CommunicationChannel
+from rt_reporter.gui.generation_status_window import GenerationStatusWindow
 
 
 class MainWindow(wx.Frame):
