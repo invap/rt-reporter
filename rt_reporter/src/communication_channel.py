@@ -120,6 +120,9 @@ class CommunicationChannel(threading.Thread):
                         comp_name = decoded_data_string[0]
                         result = str(timestamp) + "," + decoded_data_string[1]
                         event_logs_map[comp_name].write(result + "\n")
+                    case 6:
+                        # This case captures the EndOfReportEvent so there is nothing to write.
+                        pass
                     case _:
                         event_type_name = "invalid"
                         result = (
