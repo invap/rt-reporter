@@ -6,17 +6,9 @@ The RR project is organized as follows:
 ```graphql
 rt-reporter/
 ├── rt_reporter/                            # Package folder
-│   ├── gui/                                # Graphical user interface components
-│   │   ├── generation_status_window.py     # Status windows showing the event generation information
-│   │   └── main_window.py                  # Main window of the GUI
-│   ├── src/                                # Common components graphical and command line interfaces 
-│   │   ├── communication_channel.py        # Information for configuring the communication channel
-│   │   └── communication_channel_conf.py   # Main module for lauching the SUT and building the event logs
-│   ├── rt_reporter_gui                     # Entry point of the GUI of the RR
+│   ├── communication_channel.py            # Information for configuring the communication channel
+│   ├── communication_channel_conf.py       # Main module for lauching the SUT and building the event logs
 │   └── rt_reporter_sh                      # Entry point of the command line interface of the RR
-├── README_images/                          # Images for the read me file
-│   ├── file_selector_window.png            # File selector window capture
-│   └── main_window.png                     # Main window capture
 ├── COPYING                                 # Licence of the project 
 ├── pyproject.toml                          # Configuration file (optional, recommended)
 ├── README.md                               # Read me file of the project
@@ -390,36 +382,24 @@ Other reporter APIs, like the [Rust reporter API](https://github.com/invap/rust_
 
 
 ## Usage
-### GUI interface
-The graphical user interface for the RR is very simple, it is launched by typing `python rt_reporter_gui` which will open de main window of the GUI of the RR, shown in [Figure 1](#main-window).
+The command line interface for the RR is very simple, see the help output below:
+```txt
+> python -m rt_reporter.rt_reporter_sh --help
+usage: The Runtime Reporter [-h] [-t [TIMEOUT]] sut [event_report]
 
-<figure id="main-window" style="text-align: center;">
-  <img src="./README_images/main_window.png" width="600" alt="The main window of the GUI of the RR.">
-  <figcaption style="font-style: italic;"><b>Figure 1</b>: The main window of the GUI of the RR.
-  </figcaption>
-</figure>
+Reports events of a software artifact to be used by The Runtime Monitor.
 
-After clicking in the folder icon on the right of the text box, the file selection window will open (shown in [Figure 2](#file-selection-window)) and will allow to chose the executable file whose events will be recorded.
+positional arguments:
+  sut                   Path to the executable binary.
+  event_report          Path to the output event report, in csv format.
 
-<figure id="file-selection-window" style="text-align: center;">
-  <img src="./README_images/file_selection_window.png" width="600" alt="File selection window of the GUI of the RR.">
-  <figcaption style="font-style: italic;"><b>Figure 2</b>: File selection window of the GUI of the RR.
-  </figcaption>
-</figure>
+options:
+  -h, --help            show this help message and exit
+  -t [TIMEOUT], --timeout [TIMEOUT]
+                        Timeout for the acquisition process in seconds.
 
-Then, clicking on the `Start` button at the bottom of [Figure 2](#file_selection_window) will run the SUT producing the corresponding event log files in the same location where the SUT is.
-
-The `Stop` button at the bottom of [Figure 2](#file_selection_window) stops the execution of the SUT and closes the event log files.
-
-Closing the window exits the GUI of the RR. 
-
-
-### Command line interface
-The command line interface for the RR is very simple, it is invoked by typing `python rt_reporter_sh [SUT full path]` and it will run the SUT producing the corresponding event log files in the same location where the SUT is, according to the indicated in `[SUT full path]`.
-
-The interface keeps itself listening to the keyboard; pressing the letter `s` stops the execution of the SUT, closes the event log files and exits the command line interface of the RR.
-
-An alternative implementation for Windows-based systems can be developed using `msvcrt`.
+Example: python -m rt_reporter.rt_reporter_sh path/to/sut --event_report path/to/output.csv --timeout 5
+```
 
 #### Errors
 This section shows a list of errors that can be yielded by the command line interface:
