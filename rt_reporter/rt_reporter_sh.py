@@ -102,7 +102,6 @@ def main():
     output_file_path = directory+"/"+filename_without_extension+extension
     print(sut_file_path)
     print(output_file_path)
-
     # Creates the thread for the communication channel.
     acquirer = CommunicationChannel(
         output_file_path, sut_file_path, timeout
