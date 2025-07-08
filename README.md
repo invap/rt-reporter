@@ -344,7 +344,7 @@ If you want to make your package publicly available, you can upload it to the Py
 ## Relevant information about the implementation
 The RR provides the basic functionality; once the SUT is chossen, the former runs the latter within a thread and captures its output pipe for pocessing the events and writing them in the corresponding event log files. The main log file is named `?_log.csv`, where `?` is the name of the SUT; for monitoring purposes this log file must be declared with the reference name "main" in the [event reports map file](https://github.com/invap/rt-monitor/blob/main/README.md#event-logs-map-file "Event reports map file") required by the [RM](https://github.com/invap/rt-monitor "Runtime Monitor") to execute the verification. The event log files produced by the self-loggable components receive their name from the name declared in the self-loggable component log initialization event, suffixed with `_log.csv`.
 
-The SUT is assumed to be instrumented for ouputing a stream of predefined event types. Event types are defined as part of the reporting API; for example, in the case of the [C reporter API](https://github.com/invap/c-reporter-api/), the definition can be found in [Line 16](https://github.com/invap/c-reporter-api/blob/main/include/data_channel_defs.h#L49 "Event types") of file [`data_channel_defs.h`](https://github.com/invap/c-reporter-api/blob/main/include/data_channel_defs.h) as a C enumerated type:
+The SUT is assumed to be instrumented for ouputing a stream of predefined event types. Event types are defined as part of the reporting API; for example, in the case of the [C reporter API](https://github.com/invap/c-reporter-api/), the definition can be found in [Line 16](https://github.com/invap/c-reporter-api/blob/main/include/data_channel_defs.h#L16 "Event types") of file [`data_channel_defs.h`](https://github.com/invap/c-reporter-api/blob/main/include/data_channel_defs.h) as a C enumerated type:
 ```c
 //classification of the different types of events
 typedef enum {
@@ -352,18 +352,16 @@ typedef enum {
 	state_event, 
 	process_event, 
 	component_event, 
-	self_loggable_component_log_init_event, 
-	self_loggable_component_event,
 	end_of_report_event
 } eventType;
 ```
-which are naturally recognized as integers by the code fragment from [Line 78](https://github.com/invap/rt-reporter/blob/main/reporter_communication_channel.py#L78) to [Line 107](https://github.com/invap/rt-reporter/blob/main/reporter_communication_channel.py#L107) where appropriate action is taken for each type of event, according to the association {(0, `timed_event`), (1, `state_event`), (2, `process_event`), (3, `component_event`), (4, `self_loggable_component_log_init_event`), (5, `self_loggable_component_event`)}. 
-Each event arrives packed in a reporter package (see code fragment from [Line 18](https://github.com/invap/c-reporter-api/blob/main/include/data_channel_defs.h#L18) to [Line 22](https://github.com/invap/c-reporter-api/blob/main/include/data_channel_defs.h#L22) of file [`data_channel_defs.c`](https://github.com/invap/c-reporter-api/blob/main/include/data_channel_defs.h)) labeled with the event type they contain and time-stamped.
-Whenever a reporter package is unpacked by the reporter (see code fragment from [Line 73](https://github.com/invap/rt-reporter/blob/main/src/reporter_communication_channel.py#L73) to [Line 77](https://github.com/invap/rt-reporter/blob/main/src/reporter_communication_channel.py#L77) of file [`reporter_communication_channel.py`](https://github.com/invap/rt-reporter/blob/main/src/reporter_communication_channel.py)) we obtain: 1) a `[timestamp]`, 2) an event type (interpreted as an integer), and 3) an `[event]`. According to the event type obtained after unpacking the reporter package, appropriate logging actions are taken:
+which are naturally recognized as integers by the code fragment from [Line 78](https://github.com/invap/rt-reporter/blob/main/reporter_communication_channel.py#L78) to [Line 107](https://github.com/invap/rt-reporter/blob/main/reporter_communication_channel.py#L107) where appropriate action is taken for each type of event, according to the association {(0, `timed_event`), (1, `state_event`), (2, `process_event`), (3, `component_event`), (4, `end_of_report_event`)}. 
+Each event arrives packed in a reporter package (see code fragment from [Line 17](https://github.com/invap/c-reporter-api/blob/main/include/data_channel_defs.h#L17) to [Line 21](https://github.com/invap/c-reporter-api/blob/main/include/data_channel_defs.h#L21) of file [`data_channel_defs.c`](https://github.com/invap/c-reporter-api/blob/main/include/data_channel_defs.h)) labeled with the event type they contain and timestamped.
+Whenever a reporter package is unpacked by the reporter (see code fragment from [Line 64](https://github.com/invap/rt-reporter/blob/main/src/reporter_communication_channel.py#L64) to [Line 68](https://github.com/invap/rt-reporter/blob/main/src/reporter_communication_channel.py#L68) of file [`reporter_communication_channel.py`](https://github.com/invap/rt-reporter/blob/main/src/reporter_communication_channel.py)) we obtain: 1) a `[timestamp]`, 2) an event type (interpreted as an integer), and 3) an `[event]`. According to the event type obtained after unpacking the reporter package, appropriate logging actions are taken:
 - case 0: records the line "[timestamp],timed_event,[event]" in file corresponding to the main event report file. `[event]` provide details of the timed event reported and has the shape `[clock action],[clock variable]` where `[clock action]` is in the set {clock_start, clock_pause, clock_resume, clock_reset} and `[clock variable]` is the name of a free clock variable occurring in any property of the structured sequential process (see Section [Syntax for writing properties](https://github.com/invap/rt-monitor/blob/main/README.md#syntax-for-writing-properties "Syntax for writing properties") for details on the language for writing properties of structured sequential processes),
 - case 1: records the line "[timestamp],state_event,[event]" in file corresponding to the main event report file. `[event]` provide details of the state event reported and has the shape `variable_value_assigned,[variable name],[value]` where `[variable name]` is the name of a free state variable occurring in any property of the structured sequential process (see Section [Syntax for writing properties](https://github.com/invap/rt-monitor/blob/main/README.md#syntax-for-writing-properties "Syntax for writing properties") for details on the language for writing properties of structured sequential processes),
 - case 2: records the line "[timestamp],process_event,[event]" in file corresponding to the main event report file. `[event]` provide details of the process event reported and has the shape `task_started,[name]`, `task_finished,[name]` or `checkpoint_reached,[name]`, where `[name]` is a unique identifier corresponding to a task o checkpoint, respectively, in the structured sequential process (see Section [Structured Sequential Process](https://github.com/invap/rt-monitor/blob/main/README.md#structured-sequential-process "Structured Sequential Process") for details on the language for declaring structured sequential processes),
-- case 3: records the line "[timestamp],component_event,[event]" in file corresponding to the main event report file. `[event]` provide details of the component event reported and has the shape `[component name],[function name],[parameter list],[result]`, where `[component name]` is a unique identifier corresponding to a component declared in the specification of the analysis framework (see Section [Specification language for describing the analysis framework](https://github.com/invap/rt-monitor/blob/main/README.md#specification-language-for-describing-the-analysis-framework "Specification language for describing the analysis framework") for details on the language for specifying the analysis framework), `[function name]` is the name of a function implemented by the component, `[parameter list]` is the list of parameters required by the function `[function name]`, separated by commas, and `[result]` is the value returned by the invocation, provided that the function returns a value, see for example the code fragment from [Line 70](https://github.com/invap/rt-monitor-example-app/blob/main/buggy%20app/main.c#L70) to [Line 76](https://github.com/invap/rt-monitor-example-app/blob/main/buggy%20app/main.c#L76) of the function [`main`](https://github.com/invap/rt-monitor-example-app/blob/main/buggy%20app/main.c#L17), in the file [`main.c`](https://github.com/invap/rt-monitor-example-app/blob/main/buggy%20app/main.c), where the invocation of function `sample` is followed by a code fragment reporting a component event:
+- case 3: records the line "[timestamp],component_event,[event]" in file corresponding to the main event report file. `[event]` provide details of the component event reported and has the shape `[component name],[function name],[parameter list]`, where `[component name]` is a unique identifier corresponding to a component declared in the specification of the analysis framework (see Section [Specification language for describing the analysis framework](https://github.com/invap/rt-monitor/blob/main/README.md#specification-language-for-describing-the-analysis-framework "Specification language for describing the analysis framework") for details on the language for specifying the analysis framework), `[function name]` is the name of a function implemented by the component, and `[parameter list]` is the list of parameters required by the function `[function name]`, separated by commas, see for example the code fragment from [Line 70](https://github.com/invap/rt-monitor-example-app/blob/main/buggy%20app/main.c#L70) to [Line 76](https://github.com/invap/rt-monitor-example-app/blob/main/buggy%20app/main.c#L76) of the function [`main`](https://github.com/invap/rt-monitor-example-app/blob/main/buggy%20app/main.c#L17), in the file [`main.c`](https://github.com/invap/rt-monitor-example-app/blob/main/buggy%20app/main.c), where the invocation of function `sample` is followed by a code fragment reporting a component event:
 ```c
 value = sample ();
 // [ INSTRUMENTACION: Component event. ]
@@ -385,7 +383,7 @@ Other reporter APIs, like the [Rust reporter API](https://github.com/invap/rust_
 The command line interface for the RR is very simple, see the help output below:
 ```txt
 > python -m rt_reporter.rt_reporter_sh --help
-usage: The Runtime Reporter [-h] [-t [TIMEOUT]] sut [event_report]
+usage: The Runtime Reporter [--help] [--timeout [TIMEOUT]] sut [event_report]
 
 Reports events of a software artifact to be used by The Runtime Monitor.
 
@@ -394,12 +392,14 @@ positional arguments:
   event_report          Path to the output event report, in csv format.
 
 options:
-  -h, --help            show this help message and exit
-  -t [TIMEOUT], --timeout [TIMEOUT]
-                        Timeout for the acquisition process in seconds.
+  --help                Show this help message and exit.
+  --timeout [TIMEOUT]   Timeout for the acquisition process in seconds.
+  --host [HOST ADDRESS] Sets the RabbitMQ server host IP address, localhost for default.
+  --port [PORT NUMBER]  Sets the RabbitMQ server port number, 5673 for default.
 
-Example: python -m rt_reporter.rt_reporter_sh path/to/sut --event_report path/to/output.csv --timeout 5
+Example: python -m rt_reporter.rt_reporter_sh path/to/sut --host rabbitmq.invap.com.ar --port 4242 --timeout 5
 ```
+
 
 #### Errors
 This section shows a list of errors that can be yielded by the command line interface:

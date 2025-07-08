@@ -47,7 +47,7 @@ def main():
     parser = argparse.ArgumentParser(
         prog="The Runtime Reporter",
         description="Reports events of a software artifact to be used by The Runtime Monitor.",
-        epilog="Example: python -m rt_reporter.rt_reporter_sh --sut path/to/sut --log path/to/output.csv --host [localhost] --port [5673] --timeout 5"
+        epilog="Example: python -m rt_reporter.rt_reporter_sh path/to/sut --host [localhost] --port [5673] --timeout 5"
     )
     parser.add_argument("sut", type=str, help="Path to the executable binary.")
     parser.add_argument('--host', default='localhost', help='RabbitMQ server host')
