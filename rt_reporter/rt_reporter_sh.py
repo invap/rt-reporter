@@ -4,102 +4,60 @@
 
 import argparse
 import logging
-import os
+import signal
+import struct
+import subprocess
 import sys
-import threading
+import time
 from pathlib import Path
 import pika
-from pynput import keyboard
 
+from rt_reporter.communication_channel_conf import CommunicationChannelConf
 from rt_reporter.logging_configuration import (
-    _set_up_logging,
     LoggingLevel,
     LoggingDestination,
-    _configure_logging_destination,
-    _configure_logging_level
+    set_up_logging,
+    configure_logging_destination,
+    configure_logging_level
 )
-from rt_reporter.communication_channel import CommunicationChannel
 
-# Stop event for finishing the reporting process
-stop_event = threading.Event()
-
-
-def on_press(key):
-    global stop_event
-    try:
-        # Check if the key has a `char` attribute (printable key)
-        if key.char == "s":
-            stop_event.set()
-    except AttributeError:
-        # Handle special keys (like ctrl, alt, etc.) here if needed
-        pass
-
-
-def _run_acquisition(process_thread):
-    global stop_event
-    # Start the listener in a separate thread
-    with keyboard.Listener(on_press=on_press) as listener:
-        # Configure the monitor by setting up control event.
-        process_thread.set_event(stop_event)
-        # Events setup for managing the running mode.
-        stop_event.clear()
-        # Starts the acquisition thread.
-        process_thread.start()
-        # Waiting for the verification process to finish, either naturally or manually.
-        process_thread.join()
+from rt_reporter.utility import (
+    validate_input_path,
+    is_rabbitmq_server_active,
+    connect_to_rabbitmq_server
+)
 
 
 def main():
+    # Signal handling flags
+    signal_flags = {'stop': False, 'pause': False}
+
+    # Signal handling functions
+    def sigint_handler(signum, frame):
+        signal_flags['stop'] = True
+
+    def sigtstp_handler(signum, frame):
+        signal_flags['pause'] = not signal_flags['pause']  # Toggle pause state
+
+    # Registering signal handlers
+    signal.signal(signal.SIGINT, sigint_handler)
+    signal.signal(signal.SIGTSTP, sigtstp_handler)
+
     # Argument processing
     parser = argparse.ArgumentParser(
-        prog="python -m rt_reporter.rt_reporter_sh",
-        description="Reports events of a software artifact to be used by The Runtime Monitor.",
-        epilog="Example: python -m rt_reporter.rt_reporter_sh path/to/sut --host=[localhost] --port=[5673] --timeout=5"
+        prog = "python -m rt_file_tools.file_feeder.file_feeder_sh",
+        description = "Reports events dear from file containing the events in cvs format to a RabbitMQ server.",
+        epilog="Example: python -m rt_reporter.rt_reporter_sh path/to/file --host [localhost] --port [5673] --timeout 5"
     )
     parser.add_argument("sut", type=str, help="Path to the executable binary.")
     parser.add_argument('--host', default='localhost', required=True, help='RabbitMQ server host')
     parser.add_argument('--port', default=5673, type=int, required=True, help='RabbitMQ server port')
+    parser.add_argument('--username', default='guest', help='RabbitMQ server user')
+    parser.add_argument('--password', default='guest', help='RabbitMQ server password')
+    parser.add_argument('--exchange', type=str, required=True, help='Name of the exchange at the RabbitMQ server')
     parser.add_argument("--log_level", type=str, choices=["debug", "event", "info", "warnings", "errors", "critical"], default="info", required=False, help="Log verbose level (optional argument)")
     parser.add_argument('--log_file', required=False, help='Path to log file (optional argument).')
-    parser.add_argument("--timeout", type=int, nargs="?", help="Timeout for the acquisition process in seconds.")
-
-    # Declaration of useful functions
-    def validate_input_path(path):
-        try:
-            path.resolve()  # Normalize and validate
-        except (OSError, RuntimeError):
-            return False, "Invalid path syntax or characters."
-        # Check existence
-        if not path.exists():
-            return False, "Path does not exist."
-        # Check if it's a file
-        if not path.is_file():
-            return False, "Path is not a file."
-        # Check read permission
-        if not os.access(path, os.R_OK):
-            return False, "No read permission."
-        return True, "Path is valid."
-
-    def is_rabbitmq(host, port, timeout=2):
-        try:
-            logging.info(f"Testing connection to RabbitMQ server at {args.host}:{args.port}.")
-            credentials = pika.PlainCredentials('guest', 'guest')
-            parameters=pika.ConnectionParameters(
-                host=host,
-                port=port,
-                credentials=credentials,
-                connection_attempts=1,
-                socket_timeout=timeout,
-                stack_timeout=timeout,
-                client_properties={'connection_name': 'rt-reporter.connection_test'}
-            )
-            connection = pika.BlockingConnection(parameters)
-            connection.close()
-            return True
-        except Exception:
-            return False
-
-    # Start the execution of The Runtime Reporter
+    parser.add_argument("--timeout", type=int, default=0, help="Timeout for the event acquisition process in seconds.")
     # Parse arguments
     args = parser.parse_args()
     # Set up the logging infrastructure
@@ -133,9 +91,9 @@ def main():
             exit(-3)
         else:
             logging_destination = LoggingDestination.FILE
-    _set_up_logging()
-    _configure_logging_destination(logging_destination, args.log_file)
-    _configure_logging_level(logging_level)
+    set_up_logging()
+    configure_logging_destination(logging_destination, args.log_file)
+    configure_logging_level(logging_level)
     # Validate and normalise the SUT path
     input_path = Path(args.sut)
     valid, message = validate_input_path(input_path)
@@ -145,24 +103,121 @@ def main():
     logging.info(f"SUT path: {input_path}")
     sut_file_path = str(input_path)
     # Validate the existence of the RabbitMQ server
-    if not is_rabbitmq(args.host, args.port, timeout=2):
-        print(f"RabbitMQ server not active.", file=sys.stderr)
+    if not is_rabbitmq_server_active(args.host, args.port, args.username, args.password, timeout=2):
+        print(f"RabbitMQ server not active at {args.host}:{args.port}.", file=sys.stderr)
         exit(-2)
     logging.info(f"RabbitMQ server active at {args.host}:{args.port}.")
     # Determine timeout
-    if args.timeout is None:
-        timeout = 0
-    else:
+    timeout = 0
+    if args.timeout != 0:
         timeout = args.timeout
     logging.info(f"Timeout: {timeout} seconds.")
-    # Creates the thread for the communication channel.
-    acquirer = CommunicationChannel(sut_file_path, args.host, args.port, timeout)
-    # Create a new thread to read from the pipe
-    process_thread = threading.Thread(target=_run_acquisition, args=[acquirer])
-    # Starts the monitor thread
-    process_thread.start()
-    # Waiting for the verification process to finish, either naturally or manually.
-    process_thread.join()
+    #Start event acquisition from the file
+    start_time_epoch = time.time()
+    # Create a channel to communicate with the sut and starts a subprocess.
+    channel_conf = CommunicationChannelConf()
+    channel = subprocess.Popen([sut_file_path], stdout=subprocess.PIPE)
+    connection = None
+    rabbitmq_channel = None
+    try:
+        connection, rabbitmq_channel = connect_to_rabbitmq_server(
+            args.host,
+            args.port,
+            args.username,
+            args.password,
+            args.exchange
+        )
+    except Exception as e:
+        logging.error(f"Error establishing the connection to RabbitMQ server at {args.host}:{args.port}: {e}")
+
+
+    # Start the writing process to the RabbitMQ server
+    logging.info(f"Reporting events to RabbitMQ server at {args.host}:{args.port}")
+    try:
+        while True:
+            # Handle SIGINT
+            if signal_flags['stop']:
+                logging.info("SIGINT received. Stopping the event acquisition process.")
+                break
+            # Handle SIGTSTP
+            if signal_flags['pause']:
+                logging.info("SIGTSTP received. Pausing the event acquisition process.")
+                while signal_flags['pause'] and not signal_flags['stop']:
+                    signal.pause()  # Efficiently wait for signals
+                if signal_flags['stop']:
+                    logging.info("SIGINT received. Stopping the event acquisition process.")
+                    break
+                logging.info("SIGTSTP received. Resuming the event acquisition process.")
+
+            # Loop control.
+            if timeout != 0 and time.time() - start_time_epoch >= timeout:
+                logging.info(f"Acquired events for {args.timeout} seconds. Timeout reached.")
+                break
+            buffer = channel.stdout.read(channel_conf.capacity * channel_conf.max_pkg_size)
+            # Process packages from communication channel.
+            pkgs = [
+                buffer[i: i + channel_conf.max_pkg_size]
+                for i in range(0, len(buffer), channel_conf.max_pkg_size)
+            ]
+            for pkg in pkgs:
+                # unsigned long long: 8, unsigned long: 4, string: 1012
+                unpacked_data = struct.unpack("QI1012s", pkg[0:])
+                timestamp = unpacked_data[0]
+                event_type = unpacked_data[1]
+                data_string = str(unpacked_data[2])[2:]
+                stripped_data_string = data_string[:1010].strip()
+                match event_type:
+                    case 0:
+                        event = (str(timestamp) + "," + "timed_event" + "," + stripped_data_string + "\n")
+                    case 1:
+                        event = (str(timestamp) + "," + "state_event" + "," + stripped_data_string + "\n")
+                    case 2:
+                        event = (str(timestamp) + "," + "process_event" + "," + stripped_data_string + "\n")
+                    case 3:
+                        event = (str(timestamp) + "," + "component_event" + "," + stripped_data_string + "\n")
+                    case 4:
+                        # This case captures the EndOfReportEvent so there is nothing to write.
+                        event = None
+                    case _:
+                        event = (str(timestamp) + "," + "invalid" + "," + stripped_data_string + "\n")
+                if event is not None:
+                    # Send event
+                    rabbitmq_channel.basic_publish(
+                        exchange=args.exchange,
+                        routing_key="events",
+                        body=event,
+                        properties=pika.BasicProperties(
+                            delivery_mode=2,  # Persistent message
+                        )
+                    )
+                    cleaned_event = event.rstrip('\n\r')
+                    logging.log(LoggingLevel.EVENT, f"Sent event: {cleaned_event}.")
+                    time.sleep(1 / 100000)
+    finally:
+        # Always attempt to send poison pill if the channel is available
+        if rabbitmq_channel and rabbitmq_channel.is_open:
+            try:
+                rabbitmq_channel.basic_publish(
+                    exchange=args.exchange,
+                    routing_key="events",
+                    body='',
+                    properties=pika.BasicProperties(
+                        delivery_mode=2,
+                        headers={'termination': True}
+                    )
+                )
+                logging.log(LoggingLevel.EVENT, "Poison pill sent. Event acquisition stopped.")
+            except Exception as e:
+                logging.error(f"Failed to send poison pill: {e}", exc_info=True)
+        # Close connection if it exists
+        if connection and connection.is_open:
+            try:
+                connection.close()
+                logging.info(f"Connection to RabbitMQ server at {args.host}:{args.port} closed.")
+            except Exception as e:
+                logging.error(
+                    f"Error closing connection to RabbitMQ server at {args.host}:{args.port}: {e}")
+        logging.info("Event acquisition finished.")
 
 
 if __name__ == "__main__":
