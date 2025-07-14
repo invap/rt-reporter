@@ -20,8 +20,6 @@ class CommunicationChannel(threading.Thread):
         self._output_file = output_file
         # Reporting time
         self._timeout = timeout
-        # Open and clear the main log file
-        self._event_logs_map = {}
         time.sleep(1)
 
     def set_event(self, stop_event):
@@ -33,7 +31,7 @@ class CommunicationChannel(threading.Thread):
         # Create a channel and starts a subprocess.
         channel_conf = CommunicationChannelConf()
         channel = subprocess.Popen([self._process_name], stdout=subprocess.PIPE)
-        event_logs_map["main"] = open(self._output_file, "w")
+        output_file = open(self._output_file, "w")
         while True:
             # Thread control.
             if (self._stop_event.is_set() or
@@ -56,35 +54,26 @@ class CommunicationChannel(threading.Thread):
                 match event_type:
                     case 0:
                         result = (str(timestamp)+","+"timed_event"+","+stripped_data_string)
-                        event_logs_map["main"].write(result + "\n")
+                        output_file.write(result + "\n")
                     case 1:
                         result = (str(timestamp)+","+"state_event"+","+stripped_data_string)
-                        event_logs_map["main"].write(result + "\n")
+                        output_file.write(result + "\n")
                     case 2:
                         result = (str(timestamp)+","+"process_event"+","+stripped_data_string)
-                        event_logs_map["main"].write(result + "\n")
+                        output_file.write(result + "\n")
                     case 3:
                         result = (str(timestamp)+","+"component_event"+","+stripped_data_string)
-                        event_logs_map["main"].write(result + "\n")
-                    case 4:
-                        # "self-loggable component log_init_event"
-                        event_logs_map[stripped_data_string] = open(self._output_file,"w")
-                    case 5:
-                        decoded_data_string = stripped_data_string.split(",", 1)
-                        comp_name = decoded_data_string[0]
-                        result = str(timestamp) + "," + decoded_data_string[1]
-                        event_logs_map[comp_name].write(result + "\n")
+                        output_file.write(result + "\n")
                     case 6:
                         # This case captures the EndOfReportEvent so there is nothing to write.
                         pass
                     case _:
                         event_type_name = "invalid"
                         result = (str(timestamp)+","+str(event_type_name)+","+stripped_data_string)
-                        event_logs_map["main"].write(result + "\n")
+                        output_file.write(result + "\n")
                 time.sleep(1 / 100000)
         # Close the channel and terminates the subprocess.
         channel.terminate()
         channel.stdout.close()
         # close the output files
-        for comp_name in event_logs_map:
-            event_logs_map[comp_name].close()
+        output_file.close()
