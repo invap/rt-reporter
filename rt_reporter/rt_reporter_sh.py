@@ -49,17 +49,17 @@ def main():
 
     # Argument processing
     parser = argparse.ArgumentParser(
-        prog = "python -m rt_file_tools.file_feeder.file_feeder_sh",
-        description = "Reports events dear from file containing the events in cvs format to a RabbitMQ server.",
-        epilog="Example: python -m rt_reporter.rt_reporter_sh path/to/file --host [localhost] --port [5673] --timeout 5"
+        prog = "The Runtime Reporter",
+        description = "Reports events obtained from an execution of a SUT by publishing them to a RabbitMQ server.",
+        epilog = "Example: python -m rt_reporter.rt_reporter_sh /path/to/sut --host=https://myrabbitmq.org.ar --port=5672 --user=my_user --password=my_password --log_file=output_log.txt --log_level=event --timeout=120"
     )
     parser.add_argument("sut", type=str, help="Path to the executable binary.")
-    parser.add_argument('--host', type=str, default='localhost', help='RabbitMQ server host')
-    parser.add_argument('--port', type=int, default=5673, help='RabbitMQ server port')
-    parser.add_argument('--user', default='guest', help='RabbitMQ server user')
-    parser.add_argument('--password', default='guest', help='RabbitMQ server password')
-    parser.add_argument('--exchange', type=str, default='my_exchange', help='Name of the exchange at the RabbitMQ server')
-    parser.add_argument("--log_level", type=str, choices=["debug", "event", "info", "warnings", "errors", "critical"], default="event", help="Log verbose level (optional argument)")
+    parser.add_argument('--host', type=str, default='localhost', help='RabbitMQ server host.')
+    parser.add_argument('--port', type=int, default=5672, help='RabbitMQ server port.')
+    parser.add_argument('--user', default='guest', help='RabbitMQ server user.')
+    parser.add_argument('--password', default='guest', help='RabbitMQ server password.')
+    parser.add_argument('--exchange', type=str, default='my_exchange', help='Name of the exchange at the RabbitMQ server.')
+    parser.add_argument("--log_level", type=str, choices=["debug", "event", "info", "warnings", "errors", "critical"], default="info", help="Log verbose level (optional argument).")
     parser.add_argument('--log_file', help='Path to log file (optional argument).')
     parser.add_argument("--timeout", type=int, default=0, help="Timeout for the event acquisition process in seconds (0 = no timeout).")
     # Parse arguments
