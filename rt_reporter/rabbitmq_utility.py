@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR Fundacion-Sadosky-Commercial
 
 import logging
+
 import pika
 from pika.exceptions import (
     AMQPConnectionError,
@@ -10,8 +11,7 @@ from pika.exceptions import (
     ProbableAccessDeniedError,
     IncompatibleProtocolError,
     ChannelClosed,
-    ConnectionClosed,
-    DuplicateConsumerTag
+    ConnectionClosed
 )
 
 from rt_reporter.rabbitmq_server_config import rabbitmq_server_config
@@ -29,8 +29,8 @@ def rabbitmq_connect_to_server():
         host=rabbitmq_server_config.host,
         port=rabbitmq_server_config.port,
         credentials=credentials,
-        connection_attempts=3,
-        retry_delay=1,
+        connection_attempts=5,
+        retry_delay=3,
         heartbeat=0,
         client_properties={'connection_name': 'rt_file_tools.file_feeder'}
     )
@@ -75,10 +75,14 @@ def rabbitmq_connect_to_server():
         logging.info(f"Connection to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port} established.")
         return connection, rabbitmq_channel
 
-def rabbitmq_declare_queue(rabbitmq_channel):
+def rabbitmq_declare_queue(channel):
     # Declare queue
     try:
-        result = rabbitmq_channel.queue_declare(queue='', exclusive=True)
+        result = channel.queue_declare(
+            queue='',  # Let RabbitMQ generate unique name
+            exclusive=True,
+            durable=False
+        )
         queue_name = result.method.queue
     except ChannelClosed as e:
         logging.error(f"Channel closed: {e}.")
@@ -91,9 +95,10 @@ def rabbitmq_declare_queue(rabbitmq_channel):
         raise RabbitMQError()
     # Bind queue
     try:
-        rabbitmq_channel.queue_bind(
+        channel.queue_bind(
             exchange=rabbitmq_server_config.exchange,
-            queue=queue_name
+            queue=queue_name,
+            routing_key='events'
         )
     except ChannelClosed as e:
         logging.error(f"Binding violates server rules: {e}.")
@@ -111,52 +116,18 @@ def rabbitmq_declare_queue(rabbitmq_channel):
         logging.info(f"Queue created and bound to {rabbitmq_server_config.exchange} at RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port} established.")
         return queue_name
 
-def rabbitmq_register_consumer(rabbitmq_channel, queue_name, callback):
-        # Register consumer
-        try:
-            rabbitmq_channel.basic_consume(
-                queue=queue_name,
-                on_message_callback=callback,
-                auto_ack=True
-            )
-        except ChannelClosed as e:
-            logging.error(f"Error configuring RabbitMQ channel for consumption. Channel error: {e}.")
-            raise RabbitMQError()
-        except DuplicateConsumerTag as e:
-            logging.error(f"Error configuring RabbitMQ channel for consumption. Consumer tag already in use - specify unique tag: {e}.")
-            raise RabbitMQError()
-        except ConnectionClosed as e:
-            logging.error(f"Error configuring RabbitMQ channel for consumption. Connection lost while starting consumer: {e}.")
-            raise RabbitMQError()
-        except ValueError as e:
-            logging.error(f"Invalid argument: {e}.")
-            raise RabbitMQError()
-        except TypeError as e:
-            logging.error(f"Type error: {e}.")
-            raise RabbitMQError()
-        else:
-            logging.info(f"Consumer attached to {queue_name} at RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port} established.")
-
-
-def setup_rabbitmq(callback):
-    # Full RabbitMQ setup: connection, queue, binding, consumer
-    # Create connection and channel
+def setup_rabbitmq():
+    # Full RabbitMQ setup: connection, queue, binding
     try:
-        connection, rabbitmq_channel = rabbitmq_connect_to_server()
+        connection, channel = rabbitmq_connect_to_server()
     except RabbitMQError:
         logging.error(f"RabbitMQ connection or channel setup failed.")
-        return None, None
+        return None, None, None
     # Declare and bind queue
     try:
-        queue_name = rabbitmq_declare_queue(rabbitmq_channel)
+        queue_name = rabbitmq_declare_queue(channel)
     except RabbitMQError:
         logging.error(f"Queue declaration at RabbitMQ failed.")
-        return None, None
-    # Register consumer
-    try:
-        rabbitmq_register_consumer(rabbitmq_channel, queue_name, callback)
-    except RabbitMQError:
-        logging.error(f"Queue declaration at RabbitMQ failed.")
-        return None, None
-    return connection, rabbitmq_channel
+        return None, None, None
+    return connection, channel, queue_name
 
