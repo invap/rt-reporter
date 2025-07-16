@@ -4,12 +4,11 @@
 
 import argparse
 import logging
+import os
 import signal
 import struct
 import subprocess
-import sys
 import time
-from pathlib import Path
 import pika
 
 from rt_reporter.communication_channel_conf import CommunicationChannelConf
@@ -21,11 +20,10 @@ from rt_reporter.logging_configuration import (
     configure_logging_destination,
     configure_logging_level
 )
-from rt_reporter.rabbitmq_utility import (
-    rabbitmq_connect_to_server, setup_rabbitmq
-)
+from rt_reporter.rabbitmq_utility import rabbitmq_connect_to_server
 from rt_reporter.rabbitmq_server_config import rabbitmq_server_config
-from rt_reporter.utility import validate_input_path
+from rt_reporter.utility import is_valid_file_with_extension_nex, is_valid_file_with_extension
+
 
 # Errors:
 # -1: Logging infrastructure error
@@ -66,49 +64,54 @@ def main():
     args = parser.parse_args()
     # Set up the logging infrastructure
     # Configure logging level.
-    if args.log_level is None:
-        logging_level = LoggingLevel.INFO
-    else:
-        match args.log_level:
-            case "debug":
-                logging_level = LoggingLevel.DEBUG
-            case "event":
-                logging_level = LoggingLevel.EVENT
-            case "info":
-                logging_level = LoggingLevel.INFO
-            case "warnings":
-                logging_level = LoggingLevel.WARNING
-            case "errors":
-                logging_level = LoggingLevel.ERROR
-            case "critical":
-                logging_level = LoggingLevel.CRITICAL
-            case _:
-                print(f"Logging level error: {args.log_level} is not a logging level.", file=sys.stderr)
-                exit(-1)
+    match args.log_level:
+        case "debug":
+            logging_level = LoggingLevel.DEBUG
+        case "event":
+            logging_level = LoggingLevel.EVENT
+        case "info":
+            logging_level = LoggingLevel.INFO
+        case "warnings":
+            logging_level = LoggingLevel.WARNING
+        case "errors":
+            logging_level = LoggingLevel.ERROR
+        case "critical":
+            logging_level = LoggingLevel.CRITICAL
+        case _:
+            logging_level = LoggingLevel.INFO
     # Configure logging destination.
     if args.log_file is None:
         logging_destination = LoggingDestination.CONSOLE
     else:
-        valid, message = validate_input_path(args.log_file)
-        if not valid:
-            print(f"Log file error. {message}", file=sys.stderr)
-            exit(-1)
+        valid_log_file = is_valid_file_with_extension_nex(args.log_file, "log")
+        if not valid_log_file:
+            logging_destination = LoggingDestination.CONSOLE
         else:
             logging_destination = LoggingDestination.FILE
     set_up_logging()
     configure_logging_destination(logging_destination, args.log_file)
     configure_logging_level(logging_level)
-    # Validate and normalise the SUT path
-    input_path = Path(args.sut)
-    valid, message = validate_input_path(input_path)
-    if not valid:
-        print(f"Executable binary file error. {message}", file=sys.stderr)
-        exit(-2)
-    logging.info(f"SUT path: {input_path}")
-    sut_file_path = str(input_path)
+    logging.info(f"Log verbosity level: {logging_level}.")
+    if args.log_file is None:
+        logging.info("Log destination: CONSOLE.")
+    else:
+        if not valid_log_file:
+            logging.info("Log file error. Log destination: CONSOLE.")
+        else:
+            logging.info(f"Log destination: FILE ({args.log_file}).")
+    # Validate and normalise the SUT path and check that it is executable
+    valid_sut_file = (
+            is_valid_file_with_extension(args.sut, "any") and
+            os.path.isfile(args.sut) and
+            os.access(args.sut, os.X_OK)
+    )
+    if not valid_sut_file:
+        logging.error(f"SUT binary file error or permission denied: {args.sut}")
+        exit(-1)
+    logging.info(f"SUT path: {args.sut}")
     # Determine timeout
     timeout = args.timeout if args.timeout >= 0 else 0
-    logging.info(f"Timeout for message reception: {timeout} seconds.")
+    logging.info(f"Timeout for event acquisition from the SUT: {timeout} seconds.")
     # RabbitMQ server configuration
     rabbitmq_server_config.host = args.host
     rabbitmq_server_config.port = args.port
@@ -121,13 +124,11 @@ def main():
     start_time_epoch = time.time()
     # Create a channel to communicate with the sut and starts a subprocess.
     channel_conf = CommunicationChannelConf()
-    sut_pipe_channel = subprocess.Popen([sut_file_path], stdout=subprocess.PIPE)
-    # Establish connection to the RabbitMQ server.
-    logging.info(f"Establishing connection to RabbitMQ server at {args.host}:{args.port}.")
+    sut_pipe_channel = subprocess.Popen([args.sut], stdout=subprocess.PIPE)
+    # Establish the connection to the RabbitMQ server.
     connection, rabbitmq_channel = rabbitmq_connect_to_server()
-    logging.info(f"Connection to RabbitMQ server at {args.host}:{args.port} established.")
     # Start publishing events to the RabbitMQ server
-    logging.info(f"Start publishing events to RabbitMQ server at {args.host}:{args.port}.")
+    logging.info(f"Start publishing events to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
     while True:
         # Handle SIGINT
         if signal_flags['stop']:
@@ -198,6 +199,8 @@ def main():
             )
         )
         logging.log(LoggingLevel.EVENT, "Poison pill sent. Event acquisition stopped.")
+    # Stop publishing events to the RabbitMQ server
+    logging.info(f"Stop publishing events to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
     # Close connection if it exists
     if connection and connection.is_open:
         try:
@@ -205,7 +208,6 @@ def main():
             logging.info(f"Connection to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port} closed.")
         except Exception as e:
             logging.error(f"Error closing connection to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}: {e}.")
-    logging.info(f"Stop publishing events to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
     exit(0)
 
 

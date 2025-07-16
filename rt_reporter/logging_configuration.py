@@ -40,9 +40,9 @@ def configure_logging_destination(logging_destination, log_file=''):
     match logging_destination:
         case LoggingDestination.FILE:
             if log_file == '':
-                handler = logging.FileHandler("log.txt", encoding="utf-8")
+                handler = logging.FileHandler("log.txt", mode='w', encoding="utf-8")
             else:
-                handler = logging.FileHandler(log_file, encoding="utf-8")
+                handler = logging.FileHandler(log_file, mode='w', encoding="utf-8")
         case _:
             handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(formatter)
