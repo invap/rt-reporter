@@ -37,20 +37,20 @@ def rabbitmq_connect_to_server():
     # Setting up the RabbitMQ connection
     try:
         connection = pika.BlockingConnection(parameters)
-    except IncompatibleProtocolError as e:
-        logging.error(f"Protocol version at RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port} error: {e}.")
+    except IncompatibleProtocolError:
+        logging.error(f"Protocol version at RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port} error.")
         raise RabbitMQError()
-    except ProbableAuthenticationError as e:
-        logging.error(f"Authentication to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port} failed with user {rabbitmq_server_config.user} and password {rabbitmq_server_config.password}: {e}.")
+    except ProbableAuthenticationError:
+        logging.error(f"Authentication to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port} failed with user {rabbitmq_server_config.user} and password {rabbitmq_server_config.password}.")
         raise RabbitMQError()
-    except ProbableAccessDeniedError as e:
-        logging.error(f"User {rabbitmq_server_config.user} lacks access permissions to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}: {e}.")
+    except ProbableAccessDeniedError:
+        logging.error(f"User {rabbitmq_server_config.user} lacks access permissions to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
         raise RabbitMQError()
-    except AMQPConnectionError as e:
-        logging.error(f"Connection to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port} failed: {e}.")
+    except AMQPConnectionError:
+        logging.error(f"Connection to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port} failed.")
         raise RabbitMQError()
-    except TypeError as e:
-        logging.error(f"Invalid argument types: {e}.")
+    except TypeError:
+        logging.error(f"Invalid argument types.")
         raise RabbitMQError()
     logging.info(f"Connection to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port} established.")
     # Setting up the RabbitMQ channel and exchange
@@ -64,14 +64,14 @@ def rabbitmq_connect_to_server():
             auto_delete=True,
             durable=False
         )
-    except ChannelClosed as e:
-        logging.error(f"Channel closed: {e}.")
+    except ChannelClosed:
+        logging.error(f"Channel closed.")
         raise RabbitMQError()
-    except ConnectionClosed as e:
-        logging.error(f"Unexpected connection loss during operation: {e}.")
+    except ConnectionClosed:
+        logging.error(f"Unexpected connection loss during operation.")
         raise RabbitMQError()
-    except TypeError as e:
-        logging.error(f"Invalid argument types: {e}.")
+    except TypeError:
+        logging.error(f"Invalid argument types.")
         raise RabbitMQError()
     logging.info(f"Channel and exchange {rabbitmq_server_config.exchange} created at RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
     return connection, rabbitmq_channel
@@ -86,14 +86,14 @@ def rabbitmq_declare_queue(channel):
             durable=False
         )
         queue_name = result.method.queue
-    except ChannelClosed as e:
-        logging.error(f"Channel closed: {e}.")
+    except ChannelClosed:
+        logging.error(f"Channel closed.")
         raise RabbitMQError()
-    except ConnectionClosed as e:
-        logging.error(f"Unexpected connection loss during operation: {e}.")
+    except ConnectionClosed:
+        logging.error(f"Unexpected connection loss during operation.")
         raise RabbitMQError()
-    except TypeError as e:
-        logging.error(f"Invalid argument types: {e}.")
+    except TypeError:
+        logging.error(f"Invalid argument types.")
         raise RabbitMQError()
     # Bind queue
     try:
@@ -102,17 +102,17 @@ def rabbitmq_declare_queue(channel):
             queue=queue_name,
             routing_key='events'
         )
-    except ChannelClosed as e:
-        logging.error(f"Binding violates server rules: {e}.")
+    except ChannelClosed:
+        logging.error(f"Binding violates server rules.")
         raise RabbitMQError()
-    except ConnectionClosed as e:
-        logging.error(f"Connection lost during binding operation: {e}.")
+    except ConnectionClosed:
+        logging.error(f"Connection lost during binding operation.")
         raise RabbitMQError()
-    except ValueError as e:
-        logging.error(f"Missing required arguments: {e}.")
+    except ValueError:
+        logging.error(f"Missing required arguments.")
         raise RabbitMQError()
-    except TypeError as e:
-        logging.error(f"Invalid argument types: {e}.")
+    except TypeError:
+        logging.error(f"Invalid argument types.")
         raise RabbitMQError()
     else:
         logging.info(f"Queue {queue_name} created and bound to {rabbitmq_server_config.exchange} at RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port} established.")
@@ -123,13 +123,13 @@ def setup_rabbitmq():
     try:
         connection, channel = rabbitmq_connect_to_server()
     except RabbitMQError:
-        logging.error(f"RabbitMQ connection or channel setup failed.")
-        return None, None, None
+        logging.critical(f"RabbitMQ connection or channel setup failed.")
+        raise RabbitMQError()
     # Declare and bind queue
     try:
         queue_name = rabbitmq_declare_queue(channel)
     except RabbitMQError:
-        logging.error(f"Queue declaration at RabbitMQ failed.")
-        return None, None, None
+        logging.critical(f"Queue declaration at RabbitMQ failed.")
+        raise RabbitMQError()
     return connection, channel, queue_name
 

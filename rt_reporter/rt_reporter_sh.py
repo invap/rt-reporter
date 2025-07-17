@@ -198,7 +198,7 @@ def main():
                 headers={'termination': True}
             )
         )
-        logging.log(LoggingLevel.EVENT, "Poison pill sent. Event acquisition stopped.")
+        logging.info("Poison pill sent.")
     # Stop publishing events to the RabbitMQ server
     logging.info(f"Stop publishing events to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
     # Close connection if it exists
