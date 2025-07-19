@@ -152,7 +152,7 @@ def main():
         if signal_flags['pause']:
             logging.info("SIGTSTP received. Pausing the event acquisition process.")
             while signal_flags['pause'] and not signal_flags['stop']:
-                signal.pause()  # Efficiently wait for signals
+                time.sleep(1)  # Efficiently wait for signals
             if signal_flags['stop']:
                 logging.info("SIGINT received. Stopping the event acquisition process.")
                 break
@@ -201,18 +201,16 @@ def main():
                 cleaned_event = event.rstrip('\n\r')
                 logging.log(LoggingLevel.EVENT, f"Sent event: {cleaned_event}.")
                 time.sleep(1 / 100000)
-    # Always attempt to send poison pill if the channel is available
-    if rabbitmq_server_connection.channel and rabbitmq_server_connection.channel.is_open:
-        rabbitmq_server_connection.channel.basic_publish(
-            exchange=rabbitmq_server_connection.exchange,
-            routing_key='events',
-            body='',
-            properties=pika.BasicProperties(
-                delivery_mode=2,
-                headers={'termination': True}
-            )
+    rabbitmq_server_connection.channel.basic_publish(
+        exchange=rabbitmq_server_connection.exchange,
+        routing_key='events',
+        body='',
+        properties=pika.BasicProperties(
+            delivery_mode=2,
+            headers={'termination': True}
         )
-        logging.info("Poison pill sent.")
+    )
+    logging.info("Poison pill sent.")
     # Stop publishing events to the RabbitMQ server
     logging.info(f"Stop publishing events to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
     # Close connection if it exists
