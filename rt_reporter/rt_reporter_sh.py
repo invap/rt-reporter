@@ -20,15 +20,21 @@ from rt_reporter.logging_configuration import (
     configure_logging_destination,
     configure_logging_level
 )
-from rt_reporter.rabbitmq_utility import rabbitmq_connect_to_server
+from rt_reporter.rabbitmq_server_connections import rabbitmq_server_connection
+from rt_reporter.rabbitmq_utility import (
+    rabbitmq_connect_to_server,
+    RabbitMQError
+)
 from rt_reporter.rabbitmq_server_config import rabbitmq_server_config
-from rt_reporter.utility import is_valid_file_with_extension_nex, is_valid_file_with_extension
+from rt_reporter.utility import (
+    is_valid_file_with_extension_nex,
+    is_valid_file_with_extension
+)
 
 
 # Errors:
-# -1: Logging infrastructure error
-# -2: Input file error
-# -3: RabbitMQ server setup error
+# -1: Input file error
+# -2: RabbitMQ server setup error
 
 def main():
     # Signal handling flags
@@ -49,16 +55,16 @@ def main():
     parser = argparse.ArgumentParser(
         prog = "The Runtime Reporter",
         description = "Reports events obtained from an execution of a SUT by publishing them to a RabbitMQ server.",
-        epilog = "Example: python -m rt_reporter.rt_reporter_sh /path/to/sut --host=https://myrabbitmq.org.ar --port=5672 --user=my_user --password=my_password --log_file=output_log.txt --log_level=event --timeout=120"
+        epilog = "Example: python -m rt_reporter.rt_reporter_sh /path/to/sut --host=https://myrabbitmq.org.ar --port=5672 --user=my_user --password=my_password --log_file=output.log --log_level=event --timeout=120"
     )
     parser.add_argument("sut", type=str, help="Path to the executable binary.")
-    parser.add_argument('--host', type=str, default='localhost', help='RabbitMQ server host.')
-    parser.add_argument('--port', type=int, default=5672, help='RabbitMQ server port.')
-    parser.add_argument('--user', default='guest', help='RabbitMQ server user.')
-    parser.add_argument('--password', default='guest', help='RabbitMQ server password.')
-    parser.add_argument('--exchange', type=str, default='my_exchange', help='Name of the exchange at the RabbitMQ server.')
-    parser.add_argument("--log_level", type=str, choices=["debug", "event", "info", "warnings", "errors", "critical"], default="info", help="Log verbose level (optional argument).")
-    parser.add_argument('--log_file', help='Path to log file (optional argument).')
+    parser.add_argument('--host', type=str, default='localhost', help='RabbitMQ event server host.')
+    parser.add_argument('--port', type=int, default=5672, help='RabbitMQ event server port.')
+    parser.add_argument('--user', default='guest', help='RabbitMQ event server user.')
+    parser.add_argument('--password', default='guest', help='RabbitMQ event server password.')
+    parser.add_argument('--exchange', type=str, default='my_event_exchange', help='Name of the exchange at the RabbitMQ event server.')
+    parser.add_argument("--log_level", type=str, choices=["debug", "event", "info", "warnings", "errors", "critical"], default="info", help="Log verbose level.")
+    parser.add_argument('--log_file', help='Path to log file.')
     parser.add_argument("--timeout", type=int, default=0, help="Timeout for the event acquisition process in seconds (0 = no timeout).")
     # Parse arguments
     args = parser.parse_args()
@@ -126,7 +132,15 @@ def main():
     channel_conf = CommunicationChannelConf()
     sut_pipe_channel = subprocess.Popen([args.sut], stdout=subprocess.PIPE)
     # Establish the connection to the RabbitMQ server.
-    connection, rabbitmq_channel = rabbitmq_connect_to_server()
+    try:
+        connection, channel = rabbitmq_connect_to_server(rabbitmq_server_config)
+    except RabbitMQError:
+        logging.critical(f"Error setting up connection to RabbitMQ server.")
+        exit(-2)
+    else:
+        rabbitmq_server_connection.connection = connection
+        rabbitmq_server_connection.channel = channel
+        rabbitmq_server_connection.exchange = rabbitmq_server_config.exchange
     # Start publishing events to the RabbitMQ server
     logging.info(f"Start publishing events to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
     while True:
@@ -176,8 +190,8 @@ def main():
                     event = (str(timestamp) + "," + "invalid" + "," + stripped_data_string + "\n")
             if event is not None:
                 # Publish event at RabbitMQ server
-                rabbitmq_channel.basic_publish(
-                    exchange=rabbitmq_server_config.exchange,
+                rabbitmq_server_connection.channel.basic_publish(
+                    exchange=rabbitmq_server_connection.exchange,
                     routing_key='events',
                     body=event,
                     properties=pika.BasicProperties(
@@ -188,9 +202,9 @@ def main():
                 logging.log(LoggingLevel.EVENT, f"Sent event: {cleaned_event}.")
                 time.sleep(1 / 100000)
     # Always attempt to send poison pill if the channel is available
-    if rabbitmq_channel and rabbitmq_channel.is_open:
-        rabbitmq_channel.basic_publish(
-            exchange=rabbitmq_server_config.exchange,
+    if rabbitmq_server_connection.channel and rabbitmq_server_connection.channel.is_open:
+        rabbitmq_server_connection.channel.basic_publish(
+            exchange=rabbitmq_server_connection.exchange,
             routing_key='events',
             body='',
             properties=pika.BasicProperties(
