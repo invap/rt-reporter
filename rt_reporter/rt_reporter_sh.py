@@ -22,11 +22,10 @@ from rt_reporter.logging_configuration import (
 )
 from rt_reporter.rabbitmq_server_connections import rabbitmq_server_connection
 from rt_reporter.rabbitmq_utility import (
-    rabbitmq_connect_to_server,
     RabbitMQError,
-    publish_message
+    publish_message, connect_to_server, connect_to_channel_exchange
 )
-from rt_reporter.rabbitmq_server_config import rabbitmq_server_config
+from rt_reporter.rabbitmq_server_config import rabbitmq_server_config, rabbitmq_exchange_config
 from rt_reporter.utility import (
     is_valid_file_with_extension_nex,
     is_valid_file_with_extension
@@ -59,12 +58,12 @@ def main():
         epilog = "Example: python -m rt_reporter.rt_reporter_sh /path/to/sut --host=https://myrabbitmq.org.ar --port=5672 --user=my_user --password=my_password --log_file=output.log --log_level=event --timeout=120"
     )
     parser.add_argument("sut", type=str, help="Path to the executable binary.")
-    parser.add_argument('--host', type=str, default='localhost', help='RabbitMQ event server host.')
-    parser.add_argument('--port', type=int, default=5672, help='RabbitMQ event server port.')
-    parser.add_argument('--user', default='guest', help='RabbitMQ event server user.')
-    parser.add_argument('--password', default='guest', help='RabbitMQ event server password.')
+    parser.add_argument('--host', type=str, default='localhost', help='RabbitMQ server host.')
+    parser.add_argument('--port', type=int, default=5672, help='RabbitMQ server port.')
+    parser.add_argument('--user', default='guest', help='RabbitMQ server user.')
+    parser.add_argument('--password', default='guest', help='RabbitMQ server password.')
     parser.add_argument('--exchange', type=str, default='my_event_exchange', help='Name of the exchange at the RabbitMQ event server.')
-    parser.add_argument("--log_level", type=str, choices=["debug", "event", "info", "warnings", "errors", "critical"], default="info", help="Log verbose level.")
+    parser.add_argument("--log_level", type=str, choices=["debug", "info", "warnings", "errors", "critical"], default="info", help="Log verbose level.")
     parser.add_argument('--log_file', help='Path to log file.')
     parser.add_argument("--timeout", type=int, default=0, help="Timeout for the event acquisition process in seconds (0 = no timeout).")
     # Parse arguments
@@ -74,8 +73,6 @@ def main():
     match args.log_level:
         case "debug":
             logging_level = LoggingLevel.DEBUG
-        case "event":
-            logging_level = LoggingLevel.EVENT
         case "info":
             logging_level = LoggingLevel.INFO
         case "warnings":
@@ -124,7 +121,8 @@ def main():
     rabbitmq_server_config.port = args.port
     rabbitmq_server_config.user = args.user
     rabbitmq_server_config.password = args.password
-    rabbitmq_server_config.exchange = args.exchange
+    # RabbitMQ exchange configuration
+    rabbitmq_exchange_config.exchange = args.exchange
     # Other configuration
     config.timeout = timeout
     #Start event acquisition from the sut
@@ -132,16 +130,22 @@ def main():
     # Create a channel to communicate with the sut and starts a subprocess.
     channel_conf = CommunicationChannelConf()
     sut_pipe_channel = subprocess.Popen([args.sut], stdout=subprocess.PIPE)
-    # Establish the connection to the RabbitMQ server.
+    # Set up the connection to the RabbitMQ connection to server
     try:
-        connection, channel = rabbitmq_connect_to_server(rabbitmq_server_config)
+        connection = connect_to_server(rabbitmq_server_config)
     except RabbitMQError:
-        logging.critical(f"Error setting up connection to RabbitMQ server.")
+        logging.critical(f"Error setting up the connection to the RabbitMQ server.")
         exit(-2)
-    else:
-        rabbitmq_server_connection.connection = connection
-        rabbitmq_server_connection.channel = channel
-        rabbitmq_server_connection.exchange = rabbitmq_server_config.exchange
+    # Set up the RabbitMQ channel and exchange for events with the RabbitMQ server
+    try:
+        channel = connect_to_channel_exchange(rabbitmq_server_config, rabbitmq_exchange_config, connection)
+    except RabbitMQError:
+        logging.critical(f"Error setting up the channel and exchange at the RabbitMQ server.")
+        exit(-2)
+    # Set up connection for events with the RabbitMQ server
+    rabbitmq_server_connection.connection = connection
+    rabbitmq_server_connection.channel = channel
+    rabbitmq_server_connection.exchange = rabbitmq_exchange_config.exchange
     # Start publishing events to the RabbitMQ server
     logging.info(f"Start publishing events to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
     while True:
@@ -192,26 +196,34 @@ def main():
             if event is not None:
                 # Publish event at RabbitMQ server
                 try:
-                    properties = pika.BasicProperties(
-                        delivery_mode=2,  # Persistent message
+                    publish_message(
+                        rabbitmq_server_connection,
+                        'events',
+                        event,
+                        pika.BasicProperties(
+                            delivery_mode=2,  # Persistent message
+                        )
                     )
-                    publish_message(rabbitmq_server_connection, 'events', event, properties)
                 except RabbitMQError:
                     logging.info("Error sending event to the RabbitMQ event server.")
                     exit(-2)
                 else:
                     cleaned_event = event.rstrip('\n\r')
-                    logging.log(LoggingLevel.EVENT, f"Sent event: {cleaned_event}.")
+                    logging.debug(f"Sent event: {cleaned_event}.")
                     time.sleep(1 / 100000)
     # Send poison pill to the RabbitMQ logging server
     try:
-        properties=pika.BasicProperties(
-            delivery_mode=2,
-            headers={'termination': True}
+        publish_message(
+            rabbitmq_server_connection,
+            'events',
+            '',
+            pika.BasicProperties(
+                delivery_mode=2,
+                headers={'termination': True}
+            )
         )
-        publish_message(rabbitmq_server_connection, 'events', '', properties)
     except RabbitMQError:
-        logging.info("Error sending poison pill to the RabbitMQ logging server.")
+        logging.info("Error sending poison pill to the logging exchange at the RabbitMQ server.")
         exit(-2)
     else:
         logging.info("Poison pill sent.")
