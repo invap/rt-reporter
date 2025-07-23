@@ -125,8 +125,6 @@ def main():
     rabbitmq_exchange_config.exchange = args.exchange
     # Other configuration
     config.timeout = timeout
-    #Start event acquisition from the sut
-    start_time_epoch = time.time()
     # Create a channel to communicate with the sut and starts a subprocess.
     channel_conf = CommunicationChannelConf()
     sut_pipe_channel = subprocess.Popen([args.sut], stdout=subprocess.PIPE)
@@ -148,6 +146,8 @@ def main():
     rabbitmq_server_connection.exchange = rabbitmq_exchange_config.exchange
     # Start publishing events to the RabbitMQ server
     logging.info(f"Start publishing events to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
+    #Start event acquisition from the sut
+    start_time_epoch = time.time()
     while True:
         # Handle SIGINT
         if signal_flags['stop']:
