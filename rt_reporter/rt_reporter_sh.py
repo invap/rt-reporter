@@ -211,7 +211,7 @@ def main():
                     cleaned_event = event.rstrip('\n\r')
                     logging.debug(f"Sent event: {cleaned_event}.")
                     time.sleep(1 / 100000)
-    # Send poison pill to the RabbitMQ logging server
+    # Send poison pill with the events routing_key to the RabbitMQ server
     try:
         publish_message(
             rabbitmq_server_connection,
@@ -223,10 +223,10 @@ def main():
             )
         )
     except RabbitMQError:
-        logging.info("Error sending poison pill to the logging exchange at the RabbitMQ server.")
+        logging.info("Error sending with the events routing_key to the RabbitMQ server.")
         exit(-2)
     else:
-        logging.info("Poison pill sent.")
+        logging.info("Poison pill sent with the events routing_key to the RabbitMQ server.")
     # Stop publishing events to the RabbitMQ server
     logging.info(f"Stop publishing events to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
     # Close connection if it exists
