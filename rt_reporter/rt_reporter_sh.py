@@ -20,12 +20,12 @@ from rt_reporter.logging_configuration import (
     configure_logging_destination,
     configure_logging_level
 )
-from rt_reporter.rabbitmq_server_connections import rabbitmq_server_connection
-from rt_reporter.rabbitmq_utility import (
+from rt_reporter.rabbitmq_utility.rabbitmq_server_connections import rabbitmq_server_connection
+from rt_reporter.rabbitmq_utility.rabbitmq_utility import (
     RabbitMQError,
     publish_message, connect_to_server, connect_to_channel_exchange
 )
-from rt_reporter.rabbitmq_server_config import rabbitmq_server_config, rabbitmq_exchange_config
+from rt_reporter.rabbitmq_utility.rabbitmq_server_config import rabbitmq_server_config, rabbitmq_exchange_config
 from rt_reporter.utility import (
     is_valid_file_with_extension_nex,
     is_valid_file_with_extension
@@ -95,14 +95,16 @@ def main():
     set_up_logging()
     configure_logging_destination(logging_destination, args.log_file)
     configure_logging_level(logging_level)
-    logging.info(f"Log verbosity level: {logging_level}.")
+    # Create a logger for this component
+    logger = logging.getLogger("rt_reporter.rt_reporter_sh")
+    logger.info(f"Log verbosity level: {logging_level}.")
     if args.log_file is None:
-        logging.info("Log destination: CONSOLE.")
+        logger.info("Log destination: CONSOLE.")
     else:
         if not valid_log_file:
-            logging.info("Log file error. Log destination: CONSOLE.")
+            logger.info("Log file error. Log destination: CONSOLE.")
         else:
-            logging.info(f"Log destination: FILE ({args.log_file}).")
+            logger.info(f"Log destination: FILE ({args.log_file}).")
     # Validate and normalise the SUT path and check that it is executable
     valid_sut_file = (
             is_valid_file_with_extension(args.sut, "any") and
@@ -110,12 +112,12 @@ def main():
             os.access(args.sut, os.X_OK)
     )
     if not valid_sut_file:
-        logging.error(f"SUT binary file error or permission denied: {args.sut}")
+        logger.error(f"SUT binary file error or permission denied: {args.sut}")
         exit(-1)
-    logging.info(f"SUT path: {args.sut}")
+    logger.info(f"SUT path: {args.sut}")
     # Determine timeout
     timeout = args.timeout if args.timeout >= 0 else 0
-    logging.info(f"Timeout for event acquisition from the SUT: {timeout} seconds.")
+    logger.info(f"Timeout for event acquisition from the SUT: {timeout} seconds.")
     # RabbitMQ server configuration
     rabbitmq_server_config.host = args.host
     rabbitmq_server_config.port = args.port
@@ -132,39 +134,39 @@ def main():
     try:
         connection = connect_to_server(rabbitmq_server_config)
     except RabbitMQError:
-        logging.critical(f"Error setting up the connection to the RabbitMQ server.")
+        logger.critical(f"Error setting up the connection to the RabbitMQ server.")
         exit(-2)
     # Set up the RabbitMQ channel and exchange for events with the RabbitMQ server
     try:
         channel = connect_to_channel_exchange(rabbitmq_server_config, rabbitmq_exchange_config, connection)
     except RabbitMQError:
-        logging.critical(f"Error setting up the channel and exchange at the RabbitMQ server.")
+        logger.critical(f"Error setting up the channel and exchange at the RabbitMQ server.")
         exit(-2)
     # Set up connection for events with the RabbitMQ server
     rabbitmq_server_connection.connection = connection
     rabbitmq_server_connection.channel = channel
     rabbitmq_server_connection.exchange = rabbitmq_exchange_config.exchange
     # Start publishing events to the RabbitMQ server
-    logging.info(f"Start publishing events to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
+    logger.info(f"Start publishing events to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
     #Start event acquisition from the sut
     start_time_epoch = time.time()
     while True:
         # Handle SIGINT
         if signal_flags['stop']:
-            logging.info("SIGINT received. Stopping the event acquisition process.")
+            logger.info("SIGINT received. Stopping the event acquisition process.")
             break
         # Handle SIGTSTP
         if signal_flags['pause']:
-            logging.info("SIGTSTP received. Pausing the event acquisition process.")
+            logger.info("SIGTSTP received. Pausing the event acquisition process.")
             while signal_flags['pause'] and not signal_flags['stop']:
                 time.sleep(1)  # Efficiently wait for signals
             if signal_flags['stop']:
-                logging.info("SIGINT received. Stopping the event acquisition process.")
+                logger.info("SIGINT received. Stopping the event acquisition process.")
                 break
-            logging.info("SIGTSTP received. Resuming the event acquisition process.")
+            logger.info("SIGTSTP received. Resuming the event acquisition process.")
         # Timeout handling for event acquisition.
         if config.timeout != 0 and time.time() - start_time_epoch >= config.timeout:
-            logging.info(f"Acquired events for {config.timeout} seconds. Timeout reached.")
+            logger.info(f"Acquired events for {config.timeout} seconds. Timeout reached.")
             break
         # Process packages from communication channel.
         buffer = sut_pipe_channel.stdout.read(channel_conf.capacity * channel_conf.max_pkg_size)
@@ -205,11 +207,11 @@ def main():
                         )
                     )
                 except RabbitMQError:
-                    logging.info("Error sending event to the RabbitMQ event server.")
+                    logger.info("Error sending event to the RabbitMQ event server.")
                     exit(-2)
                 else:
                     cleaned_event = event.rstrip('\n\r')
-                    logging.debug(f"Sent event: {cleaned_event}.")
+                    logger.debug(f"Sent event: {cleaned_event}.")
                     time.sleep(1 / 100000)
     # Send poison pill with the events routing_key to the RabbitMQ server
     try:
@@ -223,19 +225,19 @@ def main():
             )
         )
     except RabbitMQError:
-        logging.info("Error sending with the events routing_key to the RabbitMQ server.")
+        logger.info("Error sending with the events routing_key to the RabbitMQ server.")
         exit(-2)
     else:
-        logging.info("Poison pill sent with the events routing_key to the RabbitMQ server.")
+        logger.info("Poison pill sent with the events routing_key to the RabbitMQ server.")
     # Stop publishing events to the RabbitMQ server
-    logging.info(f"Stop publishing events to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
+    logger.info(f"Stop publishing events to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
     # Close connection if it exists
     if connection and connection.is_open:
         try:
             connection.close()
-            logging.info(f"Connection to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port} closed.")
+            logger.info(f"Connection to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port} closed.")
         except Exception as e:
-            logging.error(f"Error closing connection to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}: {e}.")
+            logger.error(f"Error closing connection to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}: {e}.")
     exit(0)
 
 
