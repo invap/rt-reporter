@@ -209,10 +209,10 @@ def main():
                 except RabbitMQError:
                     logger.info("Error sending event to the RabbitMQ event server.")
                     exit(-2)
-                else:
-                    cleaned_event = event.rstrip('\n\r')
-                    logger.debug(f"Sent event: {cleaned_event}.")
-                    time.sleep(1 / 100000)
+                # Log event send
+                cleaned_event = event.rstrip('\n\r')
+                logger.debug(f"Sent event: {cleaned_event}.")
+                time.sleep(1 / 100000)
     # Send poison pill with the events routing_key to the RabbitMQ server
     try:
         publish_message(
