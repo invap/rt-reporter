@@ -148,13 +148,17 @@ def main():
     rabbitmq_server_connection.exchange = rabbitmq_exchange_config.exchange
     # Start publishing events to the RabbitMQ server
     logger.info(f"Start publishing events to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
-    #Start event acquisition from the sut
+    # Start event acquisition from the sut
     start_time_epoch = time.time()
-    while True:
+    number_of_events = 0
+    # Control variables
+    stop = False
+    completed = False
+    while not completed and not stop:
         # Handle SIGINT
         if signal_flags['stop']:
             logger.info("SIGINT received. Stopping the event acquisition process.")
-            break
+            stop = True
         # Handle SIGTSTP
         if signal_flags['pause']:
             logger.info("SIGTSTP received. Pausing the event acquisition process.")
@@ -162,12 +166,12 @@ def main():
                 time.sleep(1)  # Efficiently wait for signals
             if signal_flags['stop']:
                 logger.info("SIGINT received. Stopping the event acquisition process.")
-                break
-            logger.info("SIGTSTP received. Resuming the event acquisition process.")
+                stop = True
+            if not signal_flags['pause']:
+                logger.info("SIGTSTP received. Resuming the event acquisition process.")
         # Timeout handling for event acquisition.
         if config.timeout != 0 and time.time() - start_time_epoch >= config.timeout:
-            logger.info(f"Acquired events for {config.timeout} seconds. Timeout reached.")
-            break
+            completed = True
         # Process packages from communication channel.
         buffer = sut_pipe_channel.stdout.read(channel_conf.capacity * channel_conf.max_pkg_size)
         pkgs = [
@@ -212,6 +216,8 @@ def main():
                 # Log event send
                 cleaned_event = event.rstrip('\n\r')
                 logger.debug(f"Sent event: {cleaned_event}.")
+                # Only increment number_of_events is it is a valid event
+                number_of_events += 1
                 time.sleep(1 / 100000)
     # Send poison pill with the events routing_key to the RabbitMQ server
     try:
@@ -231,6 +237,13 @@ def main():
         logger.info("Poison pill sent with the events routing_key to the RabbitMQ server.")
     # Stop publishing events to the RabbitMQ server
     logger.info(f"Stop publishing events to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
+    # Logging the reason for stoping the verification process to the RabbitMQ server
+    if completed:
+        logger.info(f"Acquired events: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process COMPLETED, timeout reached.")
+    elif stop:
+        logger.info(f"Acquired events: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process STOPPED, SIGINT received.")
+    else:
+        logger.info(f"Acquired events: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process STOPPED, unknown reason.")
     # Close connection if it exists
     if connection and connection.is_open:
         try:
