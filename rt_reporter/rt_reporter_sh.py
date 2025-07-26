@@ -187,18 +187,18 @@ def main():
             stripped_data_string = data_string[:1010].strip()
             match event_type:
                 case 0:
-                    event = (str(timestamp) + "," + "timed_event" + "," + stripped_data_string + "\n")
+                    event = (str(timestamp) + "," + "timed_event" + "," + stripped_data_string)
                 case 1:
-                    event = (str(timestamp) + "," + "state_event" + "," + stripped_data_string + "\n")
+                    event = (str(timestamp) + "," + "state_event" + "," + stripped_data_string)
                 case 2:
-                    event = (str(timestamp) + "," + "process_event" + "," + stripped_data_string + "\n")
+                    event = (str(timestamp) + "," + "process_event" + "," + stripped_data_string)
                 case 3:
-                    event = (str(timestamp) + "," + "component_event" + "," + stripped_data_string + "\n")
+                    event = (str(timestamp) + "," + "component_event" + "," + stripped_data_string)
                 case 4:
                     # This case captures the EndOfReportEvent so there is nothing to write.
                     event = None
                 case _:
-                    event = (str(timestamp) + "," + "invalid" + "," + stripped_data_string + "\n")
+                    event = (str(timestamp) + "," + "invalid" + "," + stripped_data_string)
             if event is not None:
                 # Publish event at RabbitMQ server
                 try:
@@ -214,8 +214,7 @@ def main():
                     logger.info("Error sending event to the RabbitMQ event server.")
                     exit(-2)
                 # Log event send
-                cleaned_event = event.rstrip('\n\r')
-                logger.debug(f"Sent event: {cleaned_event}.")
+                logger.debug(f"Sent event: {event}.")
                 # Only increment number_of_events is it is a valid event
                 number_of_events += 1
                 time.sleep(1 / 100000)
