@@ -20,8 +20,8 @@ from rt_reporter.logging_configuration import (
     configure_logging_destination,
     configure_logging_level
 )
-from rt_rabbitmq_wrapper.rabbitmq_server_connections import rabbitmq_server_connection
-from rt_rabbitmq_wrapper.rabbitmq_server_config import rabbitmq_server_config, rabbitmq_exchange_config
+from rt_reporter.rabbitmq_server_configs import rabbitmq_server_config, rabbitmq_exchange_config
+from rt_reporter.rabbitmq_server_connections import rabbitmq_server_connection
 from rt_rabbitmq_wrapper.rabbitmq_utility import (
     RabbitMQError,
     publish_message,
