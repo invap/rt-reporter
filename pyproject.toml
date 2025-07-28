@@ -1,58 +1,57 @@
-[tool.poetry]
+[project]
 name = "rt-reporter"
 version = "0.1.0"
 description = "This project contains an implementation of a Runtime Reporter (RR). The rationale behind this tool is that it captures the events reported by the software under test (SUT) along its execution and saves them in event log files (to be discussed below, in Section [Operation](#operation)), for performing runtime verification using the [Runtime Monitor](https://github.com/invap/rt-monitor/) (RM). This implementation of a reporter tool is conceived for working with programs which output the occurrence of events through appropriate instrumentation with the help of a reporter API (for example, the [C reporter API](https://github.com/invap/c-reporter-api/))."
-authors = ["Carlos Gustavo Lopez Pombo <clpombo@gmail.com>"]
-readme = "README.md"
+authors = [
+  {name = "Carlos Gustavo Lopez Pombo", email = "clpombo@gmail.com"}
+]
 license = "GNU AFFERO GENERAL PUBLIC LICENSE Version 3, 19 November 2007"
+readme = "README.md"
 repository = "https://github.com/invap/rt-reporter"
-
-[[tool.poetry.packages]]
-include = "rt_reporter"
-from = "./"
-
-[tool.poetry.dependencies]
-python = ">=3.12"
-pygments =">=2.18.0,<2.19.0"
-black =">=24.10.0,<24.11.0"
-certifi =">=2024.8.30,<2024.9.0"
-charset-normalizer =">=3.4.0,<3.5.0"
-click =">=8.1.7,<8.2.0"
-docutils =">=0.21.2,<0.22.0"
-idna =">=3.10,<4.0"
-importlib-metadata =">=8.5.0,<8.6.0"
-jaraco-classes =">=3.4.0,<3.5.0"
-jaraco-context =">=6.0.1,<6.1.0"
-jaraco-functools =">=4.1.0,<4.2.0"
-keyring =">=25.5.0,<25.6.0"
-markdown-it-py =">=3.0.0,<3.1.0"
-mdurl =">=0.1.2,<0.2.0"
-more-itertools =">=10.5.0,<10.6.0"
-mypy-extensions =">=1.0.0,<1.1.0"
-nh3 =">=0.2.18,<0.3.0"
-packaging =">=24.1,<25.0"
-pathspec =">=0.12.1,<0.13.0"
-pip =">=24.3.1,<24.4.0"
-pkginfo =">=1.10.0,<1.11.0"
-platformdirs =">=4.3.6,<4.4.0"
-pynput =">=1.7.7,<1.8.0"
-pyobjc-core =">=10.3.1,<10.4.0"
-pyobjc-framework-applicationservices =">=10.3.1,<10.4.0"
-pyobjc-framework-cocoa =">=10.3.1,<10.4.0"
-pyobjc-framework-coretext =">=10.3.1,<10.4.0"
-pyobjc-framework-quartz =">=10.3.1,<10.4.0"
-readme-renderer =">=44.0,<45.0"
-requests =">=2.32.3,<2.33.0"
-requests-toolbelt =">=1.0.0,<1.1.0"
-rfc3986 =">=2.0.0,<2.1.0"
-rich =">=13.9.4,<13.10.0"
-setuptools =">=75.3.0,<75.4.0"
-six =">=1.16.0,<1.17.0"
-twine =">=5.1.1,<5.2.0"
-urllib3 =">=2.2.3,<2.3.0"
-wxpython =">=4.2.2,<4.3.0"
-zipp =">=3.20.2,<3.21.0"
+requires-python = ">=3.11,<4.0"
+packages = [
+    { include = "rt_reporter"},
+]
+dependencies = [
+    "pygments (>=2.18.0,<2.19.0)",
+    "black (>=24.10.0,<24.11.0)",
+    "certifi (>=2024.8.30,<2024.9.0)",
+    "charset-normalizer (>=3.4.0,<3.5.0)",
+    "click (>=8.1.7,<8.2.0)",
+    "docutils (>=0.21.2,<0.22.0)",
+    "idna (>=3.10,<4.0)",
+    "importlib-metadata (>=8.5.0,<8.6.0)",
+    "jaraco-classes (>=3.4.0,<3.5.0)",
+    "jaraco-context (>=6.0.1,<6.1.0)",
+    "jaraco-functools (>=4.1.0,<4.2.0)",
+    "keyring (>=25.5.0,<25.6.0)",
+    "markdown-it-py (>=3.0.0,<3.1.0)",
+    "mdurl (>=0.1.2,<0.2.0)",
+    "more-itertools (>=10.5.0,<10.6.0)",
+    "mypy-extensions (>=1.0.0,<1.1.0)",
+    "nh3 (>=0.2.18,<0.3.0)",
+    "packaging (>=24.1,<25.0)",
+    "pathspec (>=0.12.1,<0.13.0)",
+    "pip (>=24.3.1)",
+    "pkginfo (>=1.10.0,<1.11.0)",
+    "platformdirs (>=4.3.6,<4.4.0)",
+    "readme-renderer (>=44.0,<45.0)",
+    "requests (>=2.32.3,<2.33.0)",
+    "requests-toolbelt (>=1.0.0,<1.1.0)",
+    "rfc3986 (>=2.0.0,<2.1.0)",
+    "rich (>=13.9.4,<13.10.0)",
+    "setuptools (>=75.3.0,<75.4.0)",
+    "six (>=1.16.0,<1.17.0)",
+    "twine (>=5.1.1,<5.2.0)",
+    "urllib3 (>=2.2.3,<2.3.0)",
+    "zipp (>=3.20.2,<3.21.0)",
+    "pika (~=1.3.2)",
+    "pika-stubs (~=0.1.3)",
+    "pip (~=25.1.1)",
+    "poetry-core (~=2.1.3)",
+    "rt-rabbitmq-wrapper @ git+https://github.com/invap/rt-rabbitmq-wrapper.git#main"
+]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

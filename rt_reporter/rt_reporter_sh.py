@@ -20,12 +20,14 @@ from rt_reporter.logging_configuration import (
     configure_logging_destination,
     configure_logging_level
 )
-from rt_reporter.rabbitmq_utility.rabbitmq_server_connections import rabbitmq_server_connection
-from rt_reporter.rabbitmq_utility.rabbitmq_utility import (
+from rt_rabbitmq_wrapper.rabbitmq_server_connections import rabbitmq_server_connection
+from rt_rabbitmq_wrapper.rabbitmq_server_config import rabbitmq_server_config, rabbitmq_exchange_config
+from rt_rabbitmq_wrapper.rabbitmq_utility import (
     RabbitMQError,
-    publish_message, connect_to_server, connect_to_channel_exchange
+    publish_message,
+    connect_to_server,
+    connect_to_channel_exchange
 )
-from rt_reporter.rabbitmq_utility.rabbitmq_server_config import rabbitmq_server_config, rabbitmq_exchange_config
 from rt_reporter.utility import (
     is_valid_file_with_extension_nex,
     is_valid_file_with_extension
