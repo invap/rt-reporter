@@ -238,11 +238,11 @@ def main():
     logger.info(f"Stop publishing events to the exchange {rabbitmq_exchange_config.exchange} at the RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
     # Logging the reason for stoping the verification process to the RabbitMQ server
     if completed:
-        logger.info(f"Acquired events: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process COMPLETED, timeout reached.")
+        logger.info(f"Events acquired: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process COMPLETED, timeout reached.")
     elif stop:
-        logger.info(f"Acquired events: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process STOPPED, SIGINT received.")
+        logger.info(f"Events acquired: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process STOPPED, SIGINT received.")
     else:
-        logger.info(f"Acquired events: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process STOPPED, unknown reason.")
+        logger.info(f"Events acquired: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process STOPPED, unknown reason.")
     # Close connection if it exists
     if connection and connection.is_open:
         try:
