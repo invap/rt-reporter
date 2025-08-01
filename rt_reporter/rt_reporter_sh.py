@@ -136,20 +136,20 @@ def main():
     try:
         connection = connect_to_server(rabbitmq_server_config)
     except RabbitMQError:
-        logger.critical(f"Error setting up the connection to the RabbitMQ server.")
+        logger.critical(f"Error setting up the connection to the RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
         exit(-2)
     # Set up the RabbitMQ channel and exchange for events with the RabbitMQ server
     try:
         channel = connect_to_channel_exchange(rabbitmq_server_config, rabbitmq_exchange_config, connection)
     except RabbitMQError:
-        logger.critical(f"Error setting up the channel and exchange at the RabbitMQ server.")
+        logger.critical(f"Error setting up the channel and exchange at the RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
         exit(-2)
     # Set up connection for events with the RabbitMQ server
     rabbitmq_server_connection.connection = connection
     rabbitmq_server_connection.channel = channel
     rabbitmq_server_connection.exchange = rabbitmq_exchange_config.exchange
     # Start publishing events to the RabbitMQ server
-    logger.info(f"Start publishing events to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
+    logger.info(f"Start sending events from exchange {rabbitmq_exchange_config.exchange} at the RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
     # Start event acquisition from the sut
     start_time_epoch = time.time()
     number_of_events = 0
@@ -206,14 +206,13 @@ def main():
                 try:
                     publish_message(
                         rabbitmq_server_connection,
-                        'events',
                         event,
                         pika.BasicProperties(
                             delivery_mode=2,  # Persistent message
                         )
                     )
                 except RabbitMQError:
-                    logger.info("Error sending event to the RabbitMQ event server.")
+                    logger.info(f"Error sending event to the exchange {rabbitmq_exchange_config.exchange} at the RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
                     exit(-2)
                 # Log event send
                 logger.debug(f"Sent event: {event}.")
@@ -224,7 +223,6 @@ def main():
     try:
         publish_message(
             rabbitmq_server_connection,
-            'events',
             '',
             pika.BasicProperties(
                 delivery_mode=2,
@@ -232,12 +230,12 @@ def main():
             )
         )
     except RabbitMQError:
-        logger.info("Error sending with the events routing_key to the RabbitMQ server.")
+        logger.critical(f"Error sending poison pill to the exchange {rabbitmq_exchange_config.exchange} at the RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
         exit(-2)
     else:
-        logger.info("Poison pill sent with the events routing_key to the RabbitMQ server.")
+        logger.info(f"Poison pill sent to the exchange {rabbitmq_exchange_config.exchange} at the RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
     # Stop publishing events to the RabbitMQ server
-    logger.info(f"Stop publishing events to RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
+    logger.info(f"Stop publishing events to the exchange {rabbitmq_exchange_config.exchange} at the RabbitMQ server at {rabbitmq_server_config.host}:{rabbitmq_server_config.port}.")
     # Logging the reason for stoping the verification process to the RabbitMQ server
     if completed:
         logger.info(f"Acquired events: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process COMPLETED, timeout reached.")
