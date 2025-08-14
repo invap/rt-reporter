@@ -28,7 +28,12 @@ from rt_reporter.utility import (
     is_valid_file_with_extension_nex,
     is_valid_file_with_extension
 )
-
+from rt_rabbitmq_wrapper.exchange_types.event.event_from_string import (
+    event_from_string
+)
+from rt_rabbitmq_wrapper.exchange_types.event.event_protobuf import (
+    event_to_protobuf
+)
 
 # Errors:
 # -1: Input file error
@@ -163,23 +168,23 @@ def main():
             stripped_data_string = data_string[:1010].strip()
             match event_type:
                 case 0:
-                    event = (str(timestamp) + "," + "timed_event" + "," + stripped_data_string)
+                    event = event_from_string(str(timestamp) + "," + "timed_event" + "," + stripped_data_string)
                 case 1:
-                    event = (str(timestamp) + "," + "state_event" + "," + stripped_data_string)
+                    event = event_from_string(str(timestamp) + "," + "state_event" + "," + stripped_data_string)
                 case 2:
-                    event = (str(timestamp) + "," + "process_event" + "," + stripped_data_string)
+                    event = event_from_string(str(timestamp) + "," + "process_event" + "," + stripped_data_string)
                 case 3:
-                    event = (str(timestamp) + "," + "component_event" + "," + stripped_data_string)
+                    event = event_from_string(str(timestamp) + "," + "component_event" + "," + stripped_data_string)
                 case 4:
                     # This case captures the EndOfReportEvent so there is nothing to write.
                     event = None
                 case _:
-                    event = (str(timestamp) + "," + "invalid" + "," + stripped_data_string)
+                    event = event_from_string(str(timestamp) + "," + "invalid" + "," + stripped_data_string)
             if event is not None:
                 # Publish event at RabbitMQ server
                 try:
                     rabbitmq_server_connections.rabbitmq_event_server_connection.publish_message(
-                        event,
+                        event_to_protobuf(event).SerializeToString(),
                         pika.BasicProperties(
                             delivery_mode=2,  # Persistent message
                         )
