@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR Fundacion-Sadosky-Commercial
 
 import argparse
+import json
 import logging
 import os
 import signal
@@ -28,12 +29,18 @@ from rt_reporter.utility import (
     is_valid_file_with_extension_nex,
     is_valid_file_with_extension
 )
+from rt_rabbitmq_wrapper.exchange_types.event.event_dict_codec import EventDictCoDec
+from rt_rabbitmq_wrapper.exchange_types.event.event_csv_codec import EventCSVCoDec
+from rt_rabbitmq_wrapper.exchange_types.event.event_codec_errors import (
+    EventCSVError,
+    EventTypeError
+)
 
 
 # Errors:
 # -1: Input file error
 # -2: RabbitMQ server setup error
-
+# -3: Other errors
 def main():
     # Signal handling flags
     signal_flags = {'stop': False, 'pause': False}
@@ -163,23 +170,31 @@ def main():
             stripped_data_string = data_string[:1010].strip()
             match event_type:
                 case 0:
-                    event = (str(timestamp) + "," + "timed_event" + "," + stripped_data_string)
+                    event_csv = (str(timestamp) + "," + "timed_event" + "," + stripped_data_string)
                 case 1:
-                    event = (str(timestamp) + "," + "state_event" + "," + stripped_data_string)
+                    event_csv = (str(timestamp) + "," + "state_event" + "," + stripped_data_string)
                 case 2:
-                    event = (str(timestamp) + "," + "process_event" + "," + stripped_data_string)
+                    event_csv = (str(timestamp) + "," + "process_event" + "," + stripped_data_string)
                 case 3:
-                    event = (str(timestamp) + "," + "component_event" + "," + stripped_data_string)
+                    event_csv = (str(timestamp) + "," + "component_event" + "," + stripped_data_string)
                 case 4:
                     # This case captures the EndOfReportEvent so there is nothing to write.
-                    event = None
+                    event_csv = None
                 case _:
-                    event = (str(timestamp) + "," + "invalid" + "," + stripped_data_string)
-            if event is not None:
-                # Publish event at RabbitMQ server
+                    event_csv = (str(timestamp) + "," + "invalid" + "," + stripped_data_string)
+            if event_csv is not None:
+                try:
+                    event = EventCSVCoDec.from_csv(event_csv)
+                    event_dict = EventDictCoDec.to_dict(event)
+                except EventCSVError:
+                    logger.info(f"Error parsing event csv: [ {event_csv} ].")
+                    exit(-3)
+                except EventTypeError:
+                    logger.info(f"Error building dictionary from event: [ {event} ].")
+                    exit(-3)
                 try:
                     rabbitmq_server_connections.rabbitmq_event_server_connection.publish_message(
-                        event,
+                        json.dumps(event_dict, indent=4),
                         pika.BasicProperties(
                             delivery_mode=2,  # Persistent message
                         )
@@ -188,7 +203,7 @@ def main():
                     logger.info(f"Error sending event to the exchange {rabbitmq_server_connections.rabbitmq_event_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.port}.")
                     exit(-2)
                 # Log event send
-                logger.debug(f"Sent event: {event}.")
+                logger.debug(f"Sent event: {event_dict}.")
                 # Only increment number_of_events is it is a valid event
                 number_of_events += 1
                 time.sleep(1 / 100000)
