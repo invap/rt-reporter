@@ -22,13 +22,12 @@ from rt_reporter.logging_configuration import (
     configure_logging_level
 )
 from rt_reporter import rabbitmq_server_connections
-from rt_rabbitmq_wrapper.rabbitmq_utility import (
-    RabbitMQError,
-)
 from rt_reporter.utility import (
     is_valid_file_with_extension_nex,
     is_valid_file_with_extension
 )
+
+from rt_rabbitmq_wrapper.rabbitmq_utility import RabbitMQError
 from rt_rabbitmq_wrapper.exchange_types.event.event_dict_codec import EventDictCoDec
 from rt_rabbitmq_wrapper.exchange_types.event.event_csv_codec import EventCSVCoDec
 from rt_rabbitmq_wrapper.exchange_types.event.event_codec_errors import (
@@ -136,8 +135,8 @@ def main():
     number_of_events = 0
     # Control variables
     stop = False
-    completed = False
-    while not completed and not stop:
+    timeout = False
+    while not timeout and not stop:
         # Handle SIGINT
         if signal_flags['stop']:
             logger.info("SIGINT received. Stopping the event acquisition process.")
@@ -154,7 +153,7 @@ def main():
                 logger.info("SIGTSTP received. Resuming the event acquisition process.")
         # Timeout handling for event acquisition.
         if config.timeout != 0 and time.time() - start_time_epoch >= config.timeout:
-            completed = True
+            timeout = True
         # Process packages from communication channel.
         buffer = sut_pipe_channel.stdout.read(channel_conf.capacity * channel_conf.max_pkg_size)
         pkgs = [
@@ -185,10 +184,11 @@ def main():
             if event_csv is not None:
                 try:
                     event = EventCSVCoDec.from_csv(event_csv)
-                    event_dict = EventDictCoDec.to_dict(event)
                 except EventCSVError:
                     logger.info(f"Error parsing event csv: [ {event_csv} ].")
                     exit(-3)
+                try:
+                    event_dict = EventDictCoDec.to_dict(event)
                 except EventTypeError:
                     logger.info(f"Error building dictionary from event: [ {event} ].")
                     exit(-3)
@@ -226,7 +226,7 @@ def main():
     # Close connection if it exists
     rabbitmq_server_connections.rabbitmq_event_server_connection.close()
     # Logging the reason for stoping the verification process to the RabbitMQ server
-    if completed:
+    if timeout:
         logger.info(f"Events acquired: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process COMPLETED, timeout reached.")
     elif stop:
         logger.info(f"Events acquired: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process STOPPED, SIGINT received.")
