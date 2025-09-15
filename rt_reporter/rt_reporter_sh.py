@@ -124,6 +124,7 @@ def main():
         logger.critical(f"RabbitMQ infrastructure configuration file error.")
         exit(-1)
     logger.info(f"RabbitMQ infrastructure configuration file: {args.rabbitmq_config_file}")
+    # Create RabbitMQ communication infrastructure
     rabbitmq_server_connections.build_rabbitmq_server_connections(args.rabbitmq_config_file)
     # Start receiving events from the RabbitMQ server
     logger.info(f"Start sending events to exchange {rabbitmq_server_connections.rabbitmq_event_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.port}.")
