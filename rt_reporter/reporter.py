@@ -75,6 +75,7 @@ class Reporter(threading.Thread):
         # Signaling flags
         self._signal_flags = signal_flags
 
+    # Raises: ReporterError
     def run(self):
         # Start receiving events from the RabbitMQ server
         logger.info(f"Start sending events to exchange {rabbitmq_server_connections.rabbitmq_event_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.port}.")
