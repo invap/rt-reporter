@@ -9,6 +9,7 @@ import threading
 import signal
 import time
 import pika
+# import wx
 import logging
 # Create a logger for the reporter component
 logger = logging.getLogger(__name__)
@@ -42,6 +43,8 @@ def rt_reporter_runner(sut_file):
     signal.signal(signal.SIGINT, sigint_handler)
     signal.signal(signal.SIGTSTP, sigtstp_handler)
 
+    # Initiating wx application
+    # app = wx.App()
     # Create reporter
     reporter = Reporter(sut_file, signal_flags)
 
@@ -50,11 +53,15 @@ def rt_reporter_runner(sut_file):
         reporter.start()
         # Waiting for the verification process to finish, either naturally or manually.
         reporter.join()
+        # Signal the wx main event loop to exit
+        # wx.CallAfter(wx.GetApp().ExitMainLoop)
 
     # Creates the application thread for controlling the monitor
     application_thread = threading.Thread(target=_run_reporting, daemon=True)
     # Runs the application thread
     application_thread.start()
+    # Initiating the wx main event loop
+    # app.MainLoop()
     # Waiting for the application thread to finish
     application_thread.join()
 

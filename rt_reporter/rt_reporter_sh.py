@@ -7,6 +7,7 @@ import logging
 import os
 
 from rt_reporter.config import config
+from rt_reporter.errors.reporter_errors import ReporterError
 from rt_reporter.logging_configuration import (
     LoggingLevel,
     LoggingDestination,
@@ -30,9 +31,9 @@ from rt_reporter.utility import (
 def main():
     # Argument processing
     parser = argparse.ArgumentParser(
-        prog = "The Runtime Reporter",
-        description = "Reports events obtained from an execution of a SUT by publishing them to a RabbitMQ server.",
-        epilog = "Example: python -m rt_reporter.rt_reporter_sh /path/to/sut --rabbitmq_config_file=./rabbitmq_config.toml --log_file=output.log --log_level=event --timeout=120"
+        prog="The Runtime Reporter",
+        description="Reports events obtained from an execution of a SUT by publishing them to a RabbitMQ server.",
+        epilog="Example: python -m rt_reporter.rt_reporter_sh /path/to/sut --rabbitmq_config_file=./rabbitmq_config.toml --log_file=output.log --log_level=event --timeout=120"
     )
     parser.add_argument("sut", type=str, help="Path to the executable binary.")
     parser.add_argument("--rabbitmq_config_file", type=str, default='./rabbitmq_config.toml', help='Path to the TOML file containing the RabbitMQ server configuration.')
