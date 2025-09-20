@@ -3,16 +3,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR Fundacion-Sadosky-Commercial
 
 import argparse
-import json
 import logging
 import os
-import signal
-import struct
-import subprocess
-import time
-import pika
 
-from rt_reporter.communication_channel_conf import CommunicationChannelConf
 from rt_reporter.config import config
 from rt_reporter.logging_configuration import (
     LoggingLevel,
@@ -22,39 +15,19 @@ from rt_reporter.logging_configuration import (
     configure_logging_level
 )
 from rt_reporter import rabbitmq_server_connections
+from rt_reporter.reporter import rt_reporter_runner
 from rt_reporter.utility import (
     is_valid_file_with_extension_nex,
     is_valid_file_with_extension
 )
 
-from rt_rabbitmq_wrapper.rabbitmq_utility import RabbitMQError
-from rt_rabbitmq_wrapper.exchange_types.event.event_dict_codec import EventDictCoDec
-from rt_rabbitmq_wrapper.exchange_types.event.event_csv_codec import EventCSVCoDec
-from rt_rabbitmq_wrapper.exchange_types.event.event_codec_errors import (
-    EventCSVError,
-    EventTypeError
-)
 
-
-# Errors:
+# Exit codes:
 # -1: Input file error
-# -2: RabbitMQ server setup error
-# -3: Other errors
+# -2: RabbitMQ configuration error
+# -3: Reporter error
+# -4: Unexpected error
 def main():
-    # Signal handling flags
-    signal_flags = {'stop': False, 'pause': False}
-
-    # Signal handling functions
-    def sigint_handler(signum, frame):
-        signal_flags['stop'] = True
-
-    def sigtstp_handler(signum, frame):
-        signal_flags['pause'] = not signal_flags['pause']  # Toggle pause state
-
-    # Registering signal handlers
-    signal.signal(signal.SIGINT, sigint_handler)
-    signal.signal(signal.SIGTSTP, sigtstp_handler)
-
     # Argument processing
     parser = argparse.ArgumentParser(
         prog = "The Runtime Reporter",
@@ -122,117 +95,21 @@ def main():
     valid = is_valid_file_with_extension(args.rabbitmq_config_file, "toml")
     if not valid:
         logger.critical(f"RabbitMQ infrastructure configuration file error.")
-        exit(-1)
+        exit(-2)
     logger.info(f"RabbitMQ infrastructure configuration file: {args.rabbitmq_config_file}")
     # Create RabbitMQ communication infrastructure
     rabbitmq_server_connections.build_rabbitmq_server_connections(args.rabbitmq_config_file)
-    # Start receiving events from the RabbitMQ server
-    logger.info(f"Start sending events to exchange {rabbitmq_server_connections.rabbitmq_event_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.port}.")
-    # Create a channel to communicate with the sut and starts a subprocess.
-    channel_conf = CommunicationChannelConf()
-    sut_pipe_channel = subprocess.Popen([args.sut], stdout=subprocess.PIPE)
-    # Start event acquisition from the sut
-    start_time_epoch = time.time()
-    number_of_events = 0
-    # Control variables
-    stop = False
-    timeout = False
-    while not timeout and not stop:
-        # Handle SIGINT
-        if signal_flags['stop']:
-            logger.info("SIGINT received. Stopping the event acquisition process.")
-            stop = True
-        # Handle SIGTSTP
-        if signal_flags['pause']:
-            logger.info("SIGTSTP received. Pausing the event acquisition process.")
-            while signal_flags['pause'] and not signal_flags['stop']:
-                time.sleep(1)  # Efficiently wait for signals
-            if signal_flags['stop']:
-                logger.info("SIGINT received. Stopping the event acquisition process.")
-                stop = True
-            if not signal_flags['pause']:
-                logger.info("SIGTSTP received. Resuming the event acquisition process.")
-        # Timeout handling for event acquisition.
-        if config.timeout != 0 and time.time() - start_time_epoch >= config.timeout:
-            timeout = True
-        # Process packages from communication channel.
-        buffer = sut_pipe_channel.stdout.read(channel_conf.capacity * channel_conf.max_pkg_size)
-        pkgs = [
-            buffer[i: i + channel_conf.max_pkg_size]
-            for i in range(0, len(buffer), channel_conf.max_pkg_size)
-        ]
-        for pkg in pkgs:
-            # unsigned long long: 8, unsigned long: 4, string: 1012
-            unpacked_data = struct.unpack("QI1012s", pkg[0:])
-            timestamp = unpacked_data[0]
-            event_type = unpacked_data[1]
-            data_string = str(unpacked_data[2])[2:]
-            stripped_data_string = data_string[:1010].strip()
-            match event_type:
-                case 0:
-                    event_csv = (str(timestamp) + "," + "timed_event" + "," + stripped_data_string)
-                case 1:
-                    event_csv = (str(timestamp) + "," + "state_event" + "," + stripped_data_string)
-                case 2:
-                    event_csv = (str(timestamp) + "," + "process_event" + "," + stripped_data_string)
-                case 3:
-                    event_csv = (str(timestamp) + "," + "component_event" + "," + stripped_data_string)
-                case 4:
-                    # This case captures the EndOfReportEvent so there is nothing to write.
-                    event_csv = None
-                case _:
-                    event_csv = (str(timestamp) + "," + "invalid" + "," + stripped_data_string)
-            if event_csv is not None:
-                try:
-                    event = EventCSVCoDec.from_csv(event_csv)
-                except EventCSVError:
-                    logger.info(f"Error parsing event csv: [ {event_csv} ].")
-                    exit(-3)
-                try:
-                    event_dict = EventDictCoDec.to_dict(event)
-                except EventTypeError:
-                    logger.info(f"Error building dictionary from event: [ {event} ].")
-                    exit(-3)
-                try:
-                    rabbitmq_server_connections.rabbitmq_event_server_connection.publish_message(
-                        json.dumps(event_dict, indent=4),
-                        pika.BasicProperties(
-                            delivery_mode=2,  # Persistent message
-                        )
-                    )
-                except RabbitMQError:
-                    logger.info(f"Error sending event to the exchange {rabbitmq_server_connections.rabbitmq_event_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.port}.")
-                    exit(-2)
-                # Log event send
-                logger.debug(f"Sent event: {event_dict}.")
-                # Only increment number_of_events is it is a valid event
-                number_of_events += 1
-                time.sleep(1 / 100000)
-    # Send poison pill with the events routing_key to the RabbitMQ server
+    # Run the rt_reporter
     try:
-        rabbitmq_server_connections.rabbitmq_event_server_connection.publish_message(
-            '',
-            pika.BasicProperties(
-                delivery_mode=2,
-                headers={'termination': True}
-            )
-        )
-    except RabbitMQError:
-        logger.critical(f"Error sending poison pill to the exchange {rabbitmq_server_connections.rabbitmq_event_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.port}.")
-        exit(-2)
-    else:
-        logger.info(f"Poison pill sent to the exchange {rabbitmq_server_connections.rabbitmq_event_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.port}.")
-    # Stop publishing events to the RabbitMQ server
-    logger.info(f"Stop sending events to the exchange {rabbitmq_server_connections.rabbitmq_event_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.port}.")
+        rt_reporter_runner(args.sut)
+    except ReporterError as e:
+        logger.critical(f"RabbitMQ server error: {e}")
+        exit(-3)
+    except Exception as e:
+        logger.critical(f"Unexpected error: {e}")
+        exit(-4)
     # Close connection if it exists
     rabbitmq_server_connections.rabbitmq_event_server_connection.close()
-    # Logging the reason for stoping the verification process to the RabbitMQ server
-    if timeout:
-        logger.info(f"Events acquired: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process COMPLETED, timeout reached.")
-    elif stop:
-        logger.info(f"Events acquired: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process STOPPED, SIGINT received.")
-    else:
-        logger.info(f"Events acquired: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process STOPPED, unknown reason.")
     exit(0)
 
 
