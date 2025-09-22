@@ -103,11 +103,11 @@ def main():
     # Run the rt_reporter
     try:
         rt_reporter_runner(args.sut)
-    except ReporterError as e:
-        logger.critical(f"RabbitMQ server error: {e}")
+    except ReporterError:
+        logger.critical("Reporter error.")
         exit(-3)
     except Exception as e:
-        logger.critical(f"Unexpected error: {e}")
+        logger.critical(f"Unexpected error: {e}.")
         exit(-4)
     # Close connection if it exists
     rabbitmq_server_connections.rabbitmq_event_server_connection.close()

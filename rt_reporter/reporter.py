@@ -134,12 +134,12 @@ class Reporter(threading.Thread):
                     try:
                         event = EventCSVCoDec.from_csv(event_csv)
                     except EventCSVError:
-                        logger.info(f"Error parsing event csv: [ {event_csv} ].")
+                        logger.error(f"Error parsing event csv: [ {event_csv} ].")
                         raise ReporterError()
                     try:
                         event_dict = EventDictCoDec.to_dict(event)
                     except EventTypeError:
-                        logger.info(f"Error building dictionary from event: [ {event} ].")
+                        logger.error(f"Error building dictionary from event: [ {event} ].")
                         raise ReporterError()
                     try:
                         rabbitmq_server_connections.rabbitmq_event_server_connection.publish_message(
@@ -149,7 +149,7 @@ class Reporter(threading.Thread):
                             )
                         )
                     except RabbitMQError:
-                        logger.info(f"Error sending event to the exchange {rabbitmq_server_connections.rabbitmq_event_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.port}.")
+                        logger.error(f"Error sending event to the exchange {rabbitmq_server_connections.rabbitmq_event_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.port}.")
                         raise ReporterError()
                     # Log event send
                     logger.debug(f"Sent event: {event_dict}.")
@@ -166,7 +166,7 @@ class Reporter(threading.Thread):
                 )
             )
         except RabbitMQError:
-            logger.critical(f"Error sending poison pill to the exchange {rabbitmq_server_connections.rabbitmq_event_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.port}.")
+            logger.error(f"Error sending poison pill to the exchange {rabbitmq_server_connections.rabbitmq_event_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.port}.")
             raise ReporterError()
         else:
             logger.info(f"Poison pill sent to the exchange {rabbitmq_server_connections.rabbitmq_event_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.port}.")
