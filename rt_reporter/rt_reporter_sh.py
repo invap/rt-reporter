@@ -2,9 +2,14 @@
 # Copyright (c) 2024 INVAP, open@invap.com.ar
 # SPDX-License-Identifier: AGPL-3.0-or-later OR Fundacion-Sadosky-Commercial
 
-import argparse
-import logging
 import os
+import argparse
+import signal
+import threading
+# import wx
+import logging
+# Create a logger for the reporter component
+logger = None # Will be initialized in main
 
 from rt_reporter.config import config
 from rt_reporter.errors.reporter_errors import ReporterError
@@ -16,11 +21,49 @@ from rt_reporter.logging_configuration import (
     configure_logging_level
 )
 from rt_reporter import rabbitmq_server_connections
-from rt_reporter.reporter import rt_reporter_runner
+from rt_reporter.reporter import Reporter
 from rt_reporter.utility import (
     is_valid_file_with_extension_nex,
     is_valid_file_with_extension
 )
+
+
+def rt_reporter_runner(sut_file):
+    # Signal handling flags
+    signal_flags = {'stop': False, 'pause': False}
+
+    # Signal handling functions
+    def sigint_handler(signum, frame):
+        signal_flags['stop'] = True
+
+    def sigtstp_handler(signum, frame):
+        signal_flags['pause'] = not signal_flags['pause']  # Toggle pause state
+
+    # Registering signal handlers
+    signal.signal(signal.SIGINT, sigint_handler)
+    signal.signal(signal.SIGTSTP, sigtstp_handler)
+
+    # Initiating wx application
+    # app = wx.App()
+    # Create reporter
+    reporter = Reporter(sut_file, signal_flags)
+
+    def _run_reporting():
+        # Starts the monitor thread
+        reporter.start()
+        # Waiting for the verification process to finish, either naturally or manually.
+        reporter.join()
+        # Signal the wx main event loop to exit
+        # wx.CallAfter(wx.GetApp().ExitMainLoop)
+
+    # Creates the application thread for controlling the monitor
+    application_thread = threading.Thread(target=_run_reporting, daemon=True)
+    # Runs the application thread
+    application_thread.start()
+    # Initiating the wx main event loop
+    # app.MainLoop()
+    # Waiting for the application thread to finish
+    application_thread.join()
 
 
 # Exit codes:
@@ -29,6 +72,7 @@ from rt_reporter.utility import (
 # -3: Reporter error
 # -4: Unexpected error
 def main():
+    global logger
     # Argument processing
     parser = argparse.ArgumentParser(
         prog="The Runtime Reporter",
