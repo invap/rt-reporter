@@ -50,50 +50,18 @@ packages = [
     { include = "rt_reporter"},
 ]
 dependencies = [
-    "pygments (>=2.18.0,<2.19.0)",
-    "black (>=24.10.0,<24.11.0)",
-    "certifi (>=2024.8.30,<2024.9.0)",
-    "charset-normalizer (>=3.4.0,<3.5.0)",
-    "click (>=8.1.7,<8.2.0)",
-    "docutils (>=0.21.2,<0.22.0)",
-    "idna (>=3.10,<4.0)",
-    "importlib-metadata (>=8.5.0,<8.6.0)",
-    "jaraco-classes (>=3.4.0,<3.5.0)",
-    "jaraco-context (>=6.0.1,<6.1.0)",
-    "jaraco-functools (>=4.1.0,<4.2.0)",
-    "keyring (>=25.5.0,<25.6.0)",
-    "markdown-it-py (>=3.0.0,<3.1.0)",
-    "mdurl (>=0.1.2,<0.2.0)",
-    "more-itertools (>=10.5.0,<10.6.0)",
-    "mypy-extensions (>=1.0.0,<1.1.0)",
-    "nh3 (>=0.2.18,<0.3.0)",
-    "packaging (>=24.1,<25.0)",
-    "pathspec (>=0.12.1,<0.13.0)",
-    "pip (>=24.3.1)",
-    "pkginfo (>=1.10.0,<1.11.0)",
-    "platformdirs (>=4.3.6,<4.4.0)",
-    "readme-renderer (>=44.0,<45.0)",
-    "requests (>=2.32.3,<2.33.0)",
-    "requests-toolbelt (>=1.0.0,<1.1.0)",
-    "rfc3986 (>=2.0.0,<2.1.0)",
-    "rich (>=13.9.4,<13.10.0)",
-    "setuptools (>=75.3.0,<75.4.0)",
-    "six (>=1.16.0,<1.17.0)",
-    "twine (>=5.1.1,<5.2.0)",
-    "urllib3 (>=2.2.3,<2.3.0)",
-    "zipp (>=3.20.2,<3.21.0)",
     "pika (~=1.3.2)",
-    "pika-stubs (~=0.1.3)",
-    "pip (~=25.1.1)",
-    "poetry-core (~=2.1.3)",
-    "wxpython (>=4.2.2,<4.3.0); sys_platform == 'darwin'",
-    "wxpython @ https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/wxPython-4.2.2-cp312-cp312-linux_x86_64.whl ; sys_platform == 'linux'",
-    "rt-rabbitmq-wrapper @ git+https://github.com/invap/rt-rabbitmq-wrapper.git@v2.0.0"
+    "rt-rabbitmq-wrapper @ git+https://github.com/invap/rt-rabbitmq-wrapper.git@v2.0.1"
 ]
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "pytomlcleaner (>=1.0.0,<2.0.0)"
+]
 ```
 3. **Install the project:** To install the Python project using Poetry, navigate to the directory where the project is and run:
    ```bash	
