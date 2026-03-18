@@ -9,6 +9,7 @@ import threading
 import time
 import pika
 import logging
+
 # Create a logger for the reporter component
 logger = logging.getLogger(__name__)
 
@@ -21,7 +22,7 @@ from rt_rabbitmq_wrapper.exchange_types.event.event_dict_codec import EventDictC
 from rt_rabbitmq_wrapper.exchange_types.event.event_csv_codec import EventCSVCoDec
 from rt_rabbitmq_wrapper.exchange_types.event.event_codec_errors import (
     EventCSVError,
-    EventTypeError
+    EventTypeError,
 )
 from rt_rabbitmq_wrapper.rabbitmq_utility import RabbitMQError
 
@@ -38,7 +39,9 @@ class Reporter(threading.Thread):
     # Raises: ReporterError
     def run(self):
         # Start receiving events from the RabbitMQ server
-        logger.info(f"Start sending events to exchange {rabbitmq_server_connections.rabbitmq_event_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.port}.")
+        logger.info(
+            f"Start sending events to exchange {rabbitmq_server_connections.rabbitmq_event_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.port}."
+        )
         # Start event acquisition from the sut
         start_time_epoch = time.time()
         number_of_events = 0
@@ -47,26 +50,32 @@ class Reporter(threading.Thread):
         timeout = False
         while not timeout and not stop:
             # Handle SIGINT
-            if self._signal_flags['stop']:
+            if self._signal_flags["stop"]:
                 logger.info("SIGINT received. Stopping the event acquisition process.")
                 stop = True
             # Handle SIGTSTP
-            if self._signal_flags['pause']:
+            if self._signal_flags["pause"]:
                 logger.info("SIGTSTP received. Pausing the event acquisition process.")
-                while self._signal_flags['pause'] and not self._signal_flags['stop']:
+                while self._signal_flags["pause"] and not self._signal_flags["stop"]:
                     time.sleep(1)  # Efficiently wait for signals
-                if self._signal_flags['stop']:
-                    logger.info("SIGINT received. Stopping the event acquisition process.")
+                if self._signal_flags["stop"]:
+                    logger.info(
+                        "SIGINT received. Stopping the event acquisition process."
+                    )
                     stop = True
-                if not self._signal_flags['pause']:
-                    logger.info("SIGTSTP received. Resuming the event acquisition process.")
+                if not self._signal_flags["pause"]:
+                    logger.info(
+                        "SIGTSTP received. Resuming the event acquisition process."
+                    )
             # Timeout handling for event acquisition.
             if config.timeout != 0 and time.time() - start_time_epoch >= config.timeout:
                 timeout = True
             # Process packages from communication channel.
-            buffer = self._sut_pipe_channel.stdout.read(self._channel_conf.capacity * self._channel_conf.max_pkg_size)
+            buffer = self._sut_pipe_channel.stdout.read(
+                self._channel_conf.capacity * self._channel_conf.max_pkg_size
+            )
             pkgs = [
-                buffer[i: i + self._channel_conf.max_pkg_size]
+                buffer[i : i + self._channel_conf.max_pkg_size]
                 for i in range(0, len(buffer), self._channel_conf.max_pkg_size)
             ]
             for pkg in pkgs:
@@ -78,18 +87,48 @@ class Reporter(threading.Thread):
                 stripped_data_string = data_string[:1010].strip()
                 match event_type:
                     case 0:
-                        event_csv = (str(timestamp) + "," + "timed_event" + "," + stripped_data_string)
+                        event_csv = (
+                            str(timestamp)
+                            + ","
+                            + "timed_event"
+                            + ","
+                            + stripped_data_string
+                        )
                     case 1:
-                        event_csv = (str(timestamp) + "," + "state_event" + "," + stripped_data_string)
+                        event_csv = (
+                            str(timestamp)
+                            + ","
+                            + "state_event"
+                            + ","
+                            + stripped_data_string
+                        )
                     case 2:
-                        event_csv = (str(timestamp) + "," + "process_event" + "," + stripped_data_string)
+                        event_csv = (
+                            str(timestamp)
+                            + ","
+                            + "process_event"
+                            + ","
+                            + stripped_data_string
+                        )
                     case 3:
-                        event_csv = (str(timestamp) + "," + "component_event" + "," + stripped_data_string)
+                        event_csv = (
+                            str(timestamp)
+                            + ","
+                            + "component_event"
+                            + ","
+                            + stripped_data_string
+                        )
                     case 4:
                         # This case captures the EndOfReportEvent so there is nothing to write.
                         event_csv = None
                     case _:
-                        event_csv = (str(timestamp) + "," + "invalid" + "," + stripped_data_string)
+                        event_csv = (
+                            str(timestamp)
+                            + ","
+                            + "invalid"
+                            + ","
+                            + stripped_data_string
+                        )
                 if event_csv is not None:
                     try:
                         event = EventCSVCoDec.from_csv(event_csv)
@@ -99,17 +138,21 @@ class Reporter(threading.Thread):
                     try:
                         event_dict = EventDictCoDec.to_dict(event)
                     except EventTypeError:
-                        logger.error(f"Error building dictionary from event: [ {event} ].")
+                        logger.error(
+                            f"Error building dictionary from event: [ {event} ]."
+                        )
                         raise ReporterError()
                     try:
                         rabbitmq_server_connections.rabbitmq_event_server_connection.publish_message(
                             json.dumps(event_dict, indent=4),
                             pika.BasicProperties(
                                 delivery_mode=2,  # Persistent message
-                            )
+                            ),
                         )
                     except RabbitMQError:
-                        logger.error(f"Error sending event to the exchange {rabbitmq_server_connections.rabbitmq_event_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.port}.")
+                        logger.error(
+                            f"Error sending event to the exchange {rabbitmq_server_connections.rabbitmq_event_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.port}."
+                        )
                         raise ReporterError()
                     # Log event send
                     logger.debug(f"Sent event: {event_dict}.")
@@ -119,23 +162,31 @@ class Reporter(threading.Thread):
         # Send poison pill with the events routing_key to the RabbitMQ server
         try:
             rabbitmq_server_connections.rabbitmq_event_server_connection.publish_message(
-                '',
-                pika.BasicProperties(
-                    delivery_mode=2,
-                    headers={'termination': True}
-                )
+                "", pika.BasicProperties(delivery_mode=2, headers={"termination": True})
             )
         except RabbitMQError:
-            logger.error(f"Error sending poison pill to the exchange {rabbitmq_server_connections.rabbitmq_event_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.port}.")
+            logger.error(
+                f"Error sending poison pill to the exchange {rabbitmq_server_connections.rabbitmq_event_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.port}."
+            )
             raise ReporterError()
         else:
-            logger.info(f"Poison pill sent to the exchange {rabbitmq_server_connections.rabbitmq_event_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.port}.")
+            logger.info(
+                f"Poison pill sent to the exchange {rabbitmq_server_connections.rabbitmq_event_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.port}."
+            )
         # Stop publishing events to the RabbitMQ server
-        logger.info(f"Stop sending events to the exchange {rabbitmq_server_connections.rabbitmq_event_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.port}.")
+        logger.info(
+            f"Stop sending events to the exchange {rabbitmq_server_connections.rabbitmq_event_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_event_server_connection.server_info.port}."
+        )
         # Logging the reason for stoping the verification process to the RabbitMQ server
         if timeout:
-            logger.info(f"Events acquired: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process COMPLETED, timeout reached.")
+            logger.info(
+                f"Events acquired: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process COMPLETED, timeout reached."
+            )
         elif stop:
-            logger.info(f"Events acquired: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process STOPPED, SIGINT received.")
+            logger.info(
+                f"Events acquired: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process STOPPED, SIGINT received."
+            )
         else:
-            logger.info(f"Events acquired: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process STOPPED, unknown reason.")
+            logger.info(
+                f"Events acquired: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process STOPPED, unknown reason."
+            )
