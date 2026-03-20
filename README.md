@@ -1,5 +1,5 @@
 # The Runtime Reporter
-This project contains an implementation of a Runtime Reporter (RR) for the RT-Constellation. The rationale behind this tool is that it captures the events reported by the Software Under Test (SUT) along its execution and sends them across the RabbitMQ events exchange found in the RabbitMQ server configuration file. This implementation of a event reporter is conceived for working with programs which output the occurrence of events through appropriate instrumentation with the help of a reporter API (for example, the [C reporter API](https://github.com/invap/c-reporter-api/) of the [Rust reporter API](https://github.com/invap/rust-reporter-api/)).
+This project contains an implementation of a Runtime Reporter (RR) for the RT-Constellation. The rationale behind this tool is that it captures the events reported by the *System Under Test* (SUT) along its execution and sends them across the RabbitMQ events exchange found in the RabbitMQ server configuration file. This implementation of a event reporter is conceived for working with programs which output the occurrence of events through appropriate instrumentation with the help of a reporter API (for example, the [C reporter API](https://github.com/invap/c-reporter-api/) of the [Rust reporter API](https://github.com/invap/rust-reporter-api/)).
 
 ## Structure the project
 The RR project is organized as follows:
@@ -9,7 +9,7 @@ rt-reporter/
 │   ├── communication_channel_conf.py       # Information for configuring the communication channel
 │   ├── config.py                           # Definition of the reporter configuration class
 │   ├── logging_configuration.py            # Definition of the logging configuration class and functions
-│   ├── rabbitmq_server_connections.py      # Implements the code for the rt-reporter to attach to the communication channels required to execute
+│   ├── rabbitmq_server_connections.py      # Implements the code for the rt-reporter to attach to the RabbitMQ communication channels required to execute
 │   ├── reporter.py                         # Main module for lauching the SUT and building the event logs
 │   ├── rt_reporter_sh.py                   # Entry point of the command line interface of the RR
 │   └── utility.py                          # Implements functions for checking the validity of the input files 
