@@ -215,7 +215,7 @@ python -c "import rt_reporter"
 [Figure 1](#rt-reporter-architecture) shows a high level view of the architecture of the RR. In it, we highlight the most relevant components and how they interact with each other and with the other agents of the RT-Constellation, through the RabbitMQ events exchange found in the RabbitMQ server configuration file.
 
 <figure id="rt-reporter-architecture" style="text-align: center;">
-  <img src="./README_images/rt-reporter-architecture.pdf" width="600" alt="The Runtime Reporter architecture.">
+  <img src="./README_images/rt-reporter-architecture.png" width="600" alt="The Runtime Reporter architecture.">
   <figcaption style="font-style: italic;"><b>Figure 1</b>: The Runtime Reporter architecture.
   </figcaption>
 </figure>
