@@ -13,7 +13,7 @@ rt-reporter/
 │   ├── reporter.py                         # Main module for lauching the SUT and building the event logs
 │   ├── rt_reporter_sh.py                   # Entry point of the command line interface of the RR
 │   └── utility.py                          # Implements functions for checking the validity of the input files 
-├── COPYING                                 # Licence of the project 
+├── LICENSE                                 # Licence of the project 
 ├── Dockerfile                              # File containing the configuration for running the RR in a docker container 
 ├── pyproject.toml                          # Configuration file (optional, recommended)
 └── README.md                               # Read me file of the project
