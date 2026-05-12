@@ -8,9 +8,8 @@ import signal
 import sys
 import threading
 import logging
-
 # Create a logger for the reporter component
-logger = None  # Will be initialized in main
+logger = None  # Will be initialized in main()
 
 from rt_reporter.config import config
 from rt_reporter.errors.reporter_errors import ReporterError
@@ -108,6 +107,7 @@ def main():
     global logger
     # Parse arguments
     args = parse_arguments()
+    # Set up the logging infrastructure
     # Configure logging level.
     level_map = {
         "debug": LoggingLevel.DEBUG,
