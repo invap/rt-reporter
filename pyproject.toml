@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rt-reporter"
-version = "2.1.1"
+version = "2.1.2"
 description = "This project contains an implementation of a Runtime Reporter (RR) for the RT-Constellation..."
 authors = [
     {name = "Carlos Gustavo Lopez Pombo", email = "clpombo@gmail.com"}
