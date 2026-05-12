@@ -1,0 +1,39 @@
+services:
+  rt-reporter_prerelease:
+    build:
+      context: .
+      dockerfile: Dockerfile.prerelease
+    container_name: rt-reporter_prerelease
+      # For deploying the RabbitMQ message servers infrastructure in a dedicated machine, external to the RT-Costellation
+      # ports:
+      #   - "5672:5672"
+      #
+    volumes:
+      - .:/workspaces/rt-reporter
+      - ${RABBITMQ_CONFIG_FILE:-.}:/workspaces/rabbitmq-infrastructure     # If the RabbitMQ configuration file path is not set, it will be mounted with the current directory (.) as default value
+      - ${SUT_PATH:-.}:/workspaces/sut     # If the SUT path is not set, it will be mounted with the current directory (.) as default value
+      - ${EXPERIMENT_PATH:-.}:/workspaces/experiment     # If the experiment path is not set, it will be mounted with the current directory (.) as default value
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+    # For deploying the RT-Reporter infrastructure in a Docker virtual network in the same machine of the RT-Constellation 
+    networks:
+      - rabbitmq-network
+    #
+    command: >
+      sh -c "
+        cd /workspaces/rt-reporter &&
+        poetry config virtualenvs.in-project true &&
+        poetry lock --no-interaction &&
+        poetry install --no-interaction --no-ansi &&
+        sleep infinity
+      "
+      stdin_open: true  # Keep STDIN open
+      tty: true         # Allocate a pseudo-TTY
+
+# For deploying the RT-Reporter infrastructure in a Docker virtual network in the same machine of the RT-Constellation
+networks:
+  rabbitmq-network:
+    external: true
+#

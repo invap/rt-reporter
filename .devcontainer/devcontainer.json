@@ -1,0 +1,21 @@
+{
+  "name": "RT Reporter Dev Container",
+
+  "service": "rt-reporter_develop",
+  "dockerComposeFile": "../docker-compose-develop.yml",
+  "workspaceFolder": "/workspaces/rt-reporter",
+
+  // VS Code extensions to install
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.debugpy"
+      ]
+    }
+  },
+  
+  // Ports to forward from container to Mac
+  "forwardPorts": [8000, 8080, 3000]
+}

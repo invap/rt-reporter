@@ -1,0 +1,32 @@
+services:
+  rt-reporter_develop:
+    build:
+      context: .
+      dockerfile: Dockerfile.develop
+    container_name: rt-reporter_develop
+      # For deploying the RabbitMQ message servers infrastructure in a dedicated machine, external to the RT-Costellation
+      # ports:
+      #   - "5672:5672"
+      #
+    volumes:
+      - .:/workspaces/rt-reporter
+      - /Users/clpombo/sandbox/rt-constellation-experiments/rabbitmq-infrastructure/rabbitmq-infrastructure:/workspaces/rabbitmq-infrastructure     # If the RabbitMQ configuration file path is not set, it will be mounted with the current directory (.) as default value
+      - /Users/clpombo/sandbox/rt-monitor-rust-example-app:/workspaces/sut     # If the SUT path is not set, it will be mounted with the current directory (.) as default value
+      - /Users/clpombo/sandbox/rt-constellation-experiments/rt-monitor-rust-example-app:/workspaces/experiment     # If the experiment path is not set, it will be mounted with the current directory (.) as default value
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+    # For deploying the RT-Reporter infrastructure in a Docker virtual network in the same machine of the RT-Constellation 
+    networks:
+      - rabbitmq-network
+    #
+    command: ["sleep", "infinity"]  # Keep container alive
+    stdin_open: true  # Keep STDIN open
+    tty: true         # Allocate a pseudo-TTY
+
+# For deploying the RT-Reporter infrastructure in a Docker virtual network in the same machine of the RT-Constellation
+networks:
+  rabbitmq-network:
+    external: true
+#

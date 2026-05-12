@@ -1,0 +1,25 @@
+FROM ubuntu:24.04 AS rt-reporter-develop-image 
+
+# Avoid interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Base image installation
+RUN apt update && apt install -y --no-install-recommends \
+    python3 \
+    python-is-python3 \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install poetry using pip (available to all users)
+RUN apt update && apt install -y pipx && \
+    pipx ensurepath && \
+    pipx install poetry
+# Add pipx to PATH for all users
+ENV PATH="/root/.local/bin:${PATH}"
+    
+# Working directory setup
+WORKDIR /workspaces
+
+# Restore interactive prompts during package installation
+ENV DEBIAN_FRONTEND=
+
