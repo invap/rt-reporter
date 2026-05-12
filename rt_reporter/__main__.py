@@ -96,8 +96,7 @@ def parse_arguments():
         help="Timeout for the event acquisition process in seconds (0 = no timeout).",
     )
     # Parse arguments
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()
 
 
 # Exit codes:
@@ -107,9 +106,8 @@ def parse_arguments():
 # -4: Unexpected error
 def main():
     global logger
-    # Argument processing
+    # Parse arguments
     args = parse_arguments()
-    # Set up the logging infrastructure
     # Configure logging level.
     level_map = {
         "debug": LoggingLevel.DEBUG,

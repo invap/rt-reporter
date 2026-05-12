@@ -30,6 +30,8 @@ dev = [
 
 [tool.mypy]
 python_version = "3.13"
-plugins = [
-    "mypy.plugins.enums"
-]
+warn_return_any = true
+warn_unused_configs = true
+warn_unused_ignores = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
