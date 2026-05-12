@@ -1,27 +1,35 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "rt-reporter"
 version = "2.1.1"
-description = "This project contains an implementation of a Runtime Reporter (RR) for the RT-Constellation. The rationale behind this tool is that it captures the events reported by the Software Under Test (SUT) along its execution and sends them across the RabbitMQ events exchange found in the RabbitMQ server configuration file. This implementation of a event reporter is conceived for working with programs which output the occurrence of events through appropriate instrumentation with the help of a reporter API (for example, the [C reporter API](https://github.com/invap/c-reporter-api/) of the [Rust reporter API](https://github.com/invap/rust-reporter-api/))."
+description = "This project contains an implementation of a Runtime Reporter (RR) for the RT-Constellation..."
 authors = [
-  {name = "Carlos Gustavo Lopez Pombo", email = "clpombo@gmail.com"}
+    {name = "Carlos Gustavo Lopez Pombo", email = "clpombo@gmail.com"}
 ]
-license = "GNU AFFERO GENERAL PUBLIC LICENSE Version 3, 19 November 2007"
+license = {text = "GNU AFFERO GENERAL PUBLIC LICENSE Version 3, 19 November 2007"}
 readme = "README.md"
-repository = "https://github.com/invap/rt-reporter"
 requires-python = ">=3.12,<3.14"
-packages = [
-    { include = "rt_reporter"},
-]
 dependencies = [
     "pika (~=1.3.2)",
     "rt-rabbitmq-wrapper @ git+https://github.com/invap/rt-rabbitmq-wrapper.git@v2.0.1"
 ]
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[project.urls]
+repository = "https://github.com/invap/rt-reporter"
+
+[tool.setuptools.packages.find]
+include = ["rt_reporter*"]
 
 [dependency-groups]
 dev = [
     "pytomlcleaner (>=1.0.0,<2.0.0)"
+]
+
+[tool.mypy]
+python_version = "3.13"
+plugins = [
+    "mypy.plugins.enums"
 ]
