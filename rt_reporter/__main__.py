@@ -5,6 +5,7 @@
 import os
 import argparse
 import signal
+import sys
 import threading
 import logging
 
@@ -66,13 +67,7 @@ def rt_reporter_runner(sut_file):
     application_thread.join()
 
 
-# Exit codes:
-# -1: Input file error
-# -2: RabbitMQ configuration error
-# -3: Reporter error
-# -4: Unexpected error
-def main():
-    global logger
+def parse_arguments():
     # Argument processing
     parser = argparse.ArgumentParser(
         prog="The Runtime Reporter",
@@ -102,21 +97,28 @@ def main():
     )
     # Parse arguments
     args = parser.parse_args()
+    return args
+
+
+# Exit codes:
+# -1: Input file error
+# -2: RabbitMQ configuration error
+# -3: Reporter error
+# -4: Unexpected error
+def main():
+    global logger
+    # Argument processing
+    args = parse_arguments()
     # Set up the logging infrastructure
     # Configure logging level.
-    match args.log_level:
-        case "debug":
-            logging_level = LoggingLevel.DEBUG
-        case "info":
-            logging_level = LoggingLevel.INFO
-        case "warnings":
-            logging_level = LoggingLevel.WARNING
-        case "errors":
-            logging_level = LoggingLevel.ERROR
-        case "critical":
-            logging_level = LoggingLevel.CRITICAL
-        case _:
-            logging_level = LoggingLevel.INFO
+    level_map = {
+        "debug": LoggingLevel.DEBUG,
+        "info": LoggingLevel.INFO,
+        "warnings": LoggingLevel.WARNING,
+        "errors": LoggingLevel.ERROR,
+        "critical": LoggingLevel.CRITICAL,
+    }
+    logging_level = level_map.get(args.log_level, LoggingLevel.INFO)
     # Configure logging destination.
     if args.log_file is None:
         logging_destination = LoggingDestination.CONSOLE
@@ -147,7 +149,7 @@ def main():
     )
     if not valid_sut_file:
         logger.error(f"SUT binary file error or permission denied: {args.sut}")
-        exit(-1)
+        return -1
     logger.info(f"SUT path: {args.sut}")
     # Determine timeout
     config.timeout = args.timeout if args.timeout >= 0 else 0
@@ -158,7 +160,7 @@ def main():
     valid = is_valid_file_with_extension(args.rabbitmq_config_file, "toml")
     if not valid:
         logger.critical(f"RabbitMQ infrastructure configuration file error.")
-        exit(-2)
+        return -2
     logger.info(
         f"RabbitMQ infrastructure configuration file: {args.rabbitmq_config_file}"
     )
@@ -171,14 +173,14 @@ def main():
         rt_reporter_runner(args.sut)
     except ReporterError:
         logger.critical("Reporter error.")
-        exit(-3)
+        return -3
     except Exception as e:
         logger.critical(f"Unexpected error: {e}.")
-        exit(-4)
+        return -4
     # Close connection if it exists
     rabbitmq_server_connections.rabbitmq_event_server_connection.close()
-    exit(0)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
