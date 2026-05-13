@@ -28,11 +28,11 @@ from rt_rabbitmq_wrapper.rabbitmq_utility import RabbitMQError
 
 
 class Reporter(threading.Thread):
-    def __init__(self, sut, signal_flags):
+    def __init__(self, sut, sut_args, signal_flags):
         super().__init__()
         # Create a channel to communicate with the sut and starts a subprocess.
         self._channel_conf = CommunicationChannelConf()
-        self._sut_pipe_channel = subprocess.Popen([sut], stdout=subprocess.PIPE)
+        self._sut_pipe_channel = subprocess.Popen([sut] + sut_args, stdout=subprocess.PIPE)
         # Signaling flags
         self._signal_flags = signal_flags
 

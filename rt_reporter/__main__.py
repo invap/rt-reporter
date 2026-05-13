@@ -28,7 +28,7 @@ from rt_reporter.utility import (
 )
 
 
-def rt_reporter_runner(sut_file):
+def rt_reporter_runner(sut_file, sut_args):
     # Signal handling flags
     signal_flags = {"stop": False, "pause": False}
 
@@ -46,7 +46,7 @@ def rt_reporter_runner(sut_file):
     # Initiating wx application
     # app = wx.App()
     # Create reporter
-    reporter = Reporter(sut_file, signal_flags)
+    reporter = Reporter(sut_file, sut_args, signal_flags)
 
     def _run_reporting():
         # Starts the monitor thread
@@ -71,24 +71,42 @@ def parse_arguments():
     parser = argparse.ArgumentParser(
         prog="The Runtime Reporter",
         description="Reports events obtained from an execution of a SUT by publishing them to a RabbitMQ server.",
-        epilog="Example: python -m rt_reporter.rt_reporter_sh /path/to/sut --rabbitmq_config_file=./rabbitmq_config.toml --log_file=output.log --log_level=event --timeout=120",
+        epilog="Example: python -m rt_reporter /path/to/sut arg0 arg1 ... argn --rabbitmq-config-file=/path/to/rabbitmq/config/file.toml --log-file=/path/to/log/file.log --log-level=debug --timeout=120",
     )
-    parser.add_argument("sut", type=str, help="Path to the executable binary.")
     parser.add_argument(
-        "--rabbitmq_config_file",
+        "sut", 
+        type=str, 
+        help="Path to the executable binary."
+    )
+    parser.add_argument(
+        "args", 
+        type=str, 
+        nargs="*", 
+        help="Zero or more arguments to be passed to the SUT."
+    )
+    parser.add_argument(
+        "-r",
+        "--rabbitmq-config-file",
         type=str,
         default="./rabbitmq_config.toml",
         help="Path to the TOML file containing the RabbitMQ server configuration.",
     )
     parser.add_argument(
-        "--log_level",
+        "-ll",
+        "--log-level",
         type=str,
         choices=["debug", "info", "warnings", "errors", "critical"],
         default="info",
         help="Log verbose level.",
     )
-    parser.add_argument("--log_file", help="Path to log file.")
     parser.add_argument(
+        "-lf",
+        "--log-file",
+        type=str,
+        help="Path to log file.",
+    )
+    parser.add_argument(
+        "-t",
         "--timeout",
         type=int,
         default=0,
@@ -149,6 +167,7 @@ def main():
         logger.error(f"SUT binary file error or permission denied: {args.sut}")
         return -1
     logger.info(f"SUT path: {args.sut}")
+    logger.info(f"SUT arguments: {args.args}")
     # Determine timeout
     config.timeout = args.timeout if args.timeout >= 0 else 0
     logger.info(
@@ -168,7 +187,7 @@ def main():
     )
     # Run the rt_reporter
     try:
-        rt_reporter_runner(args.sut)
+        rt_reporter_runner(args.sut, args.args)
     except ReporterError:
         logger.critical("Reporter error.")
         return -3
