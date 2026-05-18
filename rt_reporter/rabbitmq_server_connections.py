@@ -15,13 +15,13 @@ from rt_rabbitmq_wrapper.rabbitmq_utility import (
 )
 
 # Singleton instance shared globally
-rabbitmq_event_server_connection = None
+rabbitmq_events_server_connection = None
 
 
 # Errors:
 # -2: RabbitMQ server setup error
 def build_rabbitmq_server_connections(file_path):
-    global rabbitmq_event_server_connection
+    global rabbitmq_events_server_connection
     try:
         f = open(file_path, "rb")
     except FileNotFoundError:
@@ -81,12 +81,12 @@ def build_rabbitmq_server_connections(file_path):
         )
     finally:
         server_info = RabbitMQ_server_info(host, port, user, password)
-        rabbitmq_event_server_connection = RabbitMQ_server_outgoing_connection(
+        rabbitmq_events_server_connection = RabbitMQ_server_outgoing_connection(
             server_info, connection_attempts, retry_delay, exchange, exchange_type
         )
     # Connect to the RabbitMQ events server
     try:
-        rabbitmq_event_server_connection.connect()
+        rabbitmq_events_server_connection.connect()
     except RabbitMQError:
         logger.error(f"RabbitMQ events server connection error.")
         exit(-2)
