@@ -87,48 +87,18 @@ class Reporter(threading.Thread):
                 stripped_data_string = data_string[:1010].strip()
                 match event_type:
                     case 0:
-                        event_csv = (
-                            str(timestamp)
-                            + ","
-                            + "timed_event"
-                            + ","
-                            + stripped_data_string
-                        )
+                        event_csv = f"{timestamp},timed_event,{stripped_data_string}"
                     case 1:
-                        event_csv = (
-                            str(timestamp)
-                            + ","
-                            + "state_event"
-                            + ","
-                            + stripped_data_string
-                        )
+                        event_csv = f"{timestamp},state_event,{stripped_data_string}"
                     case 2:
-                        event_csv = (
-                            str(timestamp)
-                            + ","
-                            + "process_event"
-                            + ","
-                            + stripped_data_string
-                        )
+                        event_csv = f"{timestamp},process_event,{stripped_data_string}"
                     case 3:
-                        event_csv = (
-                            str(timestamp)
-                            + ","
-                            + "component_event"
-                            + ","
-                            + stripped_data_string
-                        )
+                        event_csv = f"{timestamp},component_event,{stripped_data_string}"
                     case 4:
                         # This case captures the EndOfReportEvent so there is nothing to write.
                         event_csv = None
                     case _:
-                        event_csv = (
-                            str(timestamp)
-                            + ","
-                            + "invalid"
-                            + ","
-                            + stripped_data_string
-                        )
+                        event_csv = f"{timestamp},invalid,{stripped_data_string}"
                 if event_csv is not None:
                     try:
                         event = EventCSVCoDec.from_csv(event_csv)
