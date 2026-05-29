@@ -44,46 +44,25 @@ def build_rabbitmq_server_connections(file_path):
     try:
         events_conf_dict = rabbitmq_exchange_dict["exchanges"]["events"]
     except KeyError:
-        (
-            host,
-            port,
-            user,
-            password,
-            connection_attempts,
-            retry_delay,
-            exchange,
-            exchange_type,
-        ) = ("localhost", 5672, "guest", "guest", 5, 3, "events_exchange", "fanout")
+        (host, port, user, password, connection_attempts, retry_delay, exchange, exchange_type) = ("localhost", 5672, "guest", "guest", 5, 3, "events_exchange", "fanout")
     else:
         host = events_conf_dict["host"] if "host" in events_conf_dict else "localhost"
         port = events_conf_dict["port"] if "port" in events_conf_dict else 5672
         user = events_conf_dict["user"] if "user" in events_conf_dict else "guest"
-        password = (
-            events_conf_dict["password"] if "password" in events_conf_dict else "guest"
-        )
-        connection_attempts = (
-            events_conf_dict["connection_attempts"]
-            if "connection_attempts" in events_conf_dict
-            else 5
-        )
-        retry_delay = (
-            events_conf_dict["retry_delay"] if "retry_delay" in events_conf_dict else 3
-        )
-        exchange = (
-            events_conf_dict["name"]
-            if "name" in events_conf_dict
-            else "events_exchange"
-        )
-        exchange_type = (
-            events_conf_dict["exchange_type"]
-            if "exchange_type" in events_conf_dict
-            else "fanout"
-        )
+        password = events_conf_dict["password"] if "password" in events_conf_dict else "guest"
+        connection_attempts = events_conf_dict["connection_attempts"] if "connection_attempts" in events_conf_dict else 5
+        retry_delay = events_conf_dict["retry_delay"] if "retry_delay" in events_conf_dict else 3
+        exchange = events_conf_dict["name"] if "name" in events_conf_dict else "events_exchange"
+        exchange_type = events_conf_dict["exchange_type"] if "exchange_type" in events_conf_dict else "fanout"
     finally:
         server_info = RabbitMQ_server_info(host, port, user, password)
-        rabbitmq_events_server_connection = RabbitMQ_server_outgoing_connection(
-            server_info, connection_attempts, retry_delay, exchange, exchange_type
-        )
+        try:
+            rabbitmq_events_server_connection = RabbitMQ_server_outgoing_connection(
+                server_info, connection_attempts, retry_delay, exchange, exchange_type
+            )
+        except RabbitMQError:
+            logger.error(f"RabbitMQ events server outgoing connection creation error.")
+            exit(-2)
     # Connect to the RabbitMQ events server
     try:
         rabbitmq_events_server_connection.connect()

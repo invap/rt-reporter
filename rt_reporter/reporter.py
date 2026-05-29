@@ -46,31 +46,16 @@ class Reporter(threading.Thread):
         start_time_epoch = time.time()
         number_of_events = 0
         # Control variables
-        stop = False
-        timeout = False
-        while not timeout and not stop:
-            # Handle SIGINT
-            if self._signal_flags["stop"]:
-                logger.info("SIGINT received. Stopping the event acquisition process.")
-                stop = True
-            # Handle SIGTSTP
-            if self._signal_flags["pause"]:
-                logger.info("SIGTSTP received. Pausing the event acquisition process.")
-                while self._signal_flags["pause"] and not self._signal_flags["stop"]:
-                    time.sleep(1)  # Efficiently wait for signals
-                if self._signal_flags["stop"]:
-                    logger.info(
-                        "SIGINT received. Stopping the event acquisition process."
-                    )
-                    stop = True
-                if not self._signal_flags["pause"]:
-                    logger.info(
-                        "SIGTSTP received. Resuming the event acquisition process."
-                    )
-            # Timeout handling for event acquisition.
-            if config.timeout != 0 and time.time() - start_time_epoch >= config.timeout:
-                timeout = True
-            # Process packages from communication channel.
+        control = {
+            "signal_stop": False,
+            "timeout_stop": False
+        }
+        while not control["signal_stop"] and not control["timeout_stop"]:
+            # Check for signals and handle them accordingly
+            Reporter._handle_signals(control, self._signal_flags)
+            # Check for termination due to timeout
+            Reporter._check_timeout(control, start_time_epoch)
+            # Process packages from communication channel
             buffer = self._sut_pipe_channel.stdout.read(
                 self._channel_conf.capacity * self._channel_conf.max_pkg_size
             )
@@ -148,15 +133,42 @@ class Reporter(threading.Thread):
             f"Stop sending events to the exchange {rabbitmq_server_connections.rabbitmq_events_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_events_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_events_server_connection.server_info.port}."
         )
         # Logging the reason for stoping the verification process to the RabbitMQ server
-        if timeout:
+        if control["signal_stop"]:
             logger.info(
-                f"Events acquired: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process COMPLETED, timeout reached."
+                f"Events acquired: {number_of_events} - Time (secs.): {time.time()-start_time_epoch:.3f} - Process STOPPED, SIGINT received."
             )
-        elif stop:
+        elif control["timeout_stop"]:
             logger.info(
-                f"Events acquired: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process STOPPED, SIGINT received."
+                f"Events acquired: {number_of_events} - Time (secs.): {time.time()-start_time_epoch:.3f} - Process STOPPED, timeout reached ({time.time()-start_time_epoch} secs.)."
             )
         else:
             logger.info(
                 f"Events acquired: {number_of_events} - Time (secs.): {time.time() - start_time_epoch:.3f} - Process STOPPED, unknown reason."
             )
+
+    # Functions used to check termination of the monitoring process by signals or timeout. 
+    # They update the control dictionary with the corresponding flags to indicate whether 
+    # the monitoring process should be stopped or not.
+    @staticmethod
+    def _handle_signals(control, signal_flags):
+        # Handle SIGINT
+        if signal_flags["stop"]:
+            logger.info("SIGINT received. Stopping the event reception process.")
+            control["signal_stop"] = True
+        # Handle SIGTSTP
+        if signal_flags["pause"]:
+            logger.info("SIGTSTP received. Pausing the event reception process.")
+            while signal_flags["pause"] and not signal_flags["stop"]:
+                time.sleep(1)  # Efficiently wait for signals
+            if signal_flags["stop"]:
+                logger.info("SIGINT received. Stopping the event reception process.")
+                control["signal_stop"] = True
+            if not signal_flags["pause"]:
+                logger.info("SIGTSTP received. Resuming the event reception process.")
+                control["signal_stop"] = False
+        control["signal_stop"] = False
+
+    @staticmethod
+    def _check_timeout(control, start_time_epoch):
+        if 0 < config.timeout < (time.time() - start_time_epoch):
+            control["timeout_stop"] = True
