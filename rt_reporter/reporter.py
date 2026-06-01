@@ -52,7 +52,7 @@ class Reporter(threading.Thread):
             "signal_stop": False,
             "timeout_stop": False,
             # The monitoring process should stop if any of the flags poison_received, signal_stop, verdict_stop or timeout_stop is set to True.
-            "should_stop": lambda: control["poison_received"] or control["signal_stop"] or control["verdict_stop"] or control["timeout_stop"]
+            "should_stop": lambda:control["signal_stop"] or control["timeout_stop"]
         }
 
         # Signal handler thread infrastructure, which updates the control dictionary with the signal_stop flag if a SIGINT is received 
