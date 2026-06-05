@@ -10,7 +10,7 @@ import time
 import pika
 import logging
 
-# Create a logger for the reporter component
+# Create a logger for the reporter component.
 logger = logging.getLogger(__name__)
 
 from rt_reporter.errors.reporter_errors import ReporterError
@@ -33,7 +33,7 @@ class Reporter(threading.Thread):
         # Create a channel to communicate with the sut and starts a subprocess.
         self._channel_conf = CommunicationChannelConf()
         self._sut_pipe_channel = subprocess.Popen([sut] + sut_args, stdout=subprocess.PIPE)
-        # Signaling flags
+        # Signaling flags.
         self._signal_flags = signal_flags
 
     # Raises: ReporterError
@@ -58,35 +58,47 @@ class Reporter(threading.Thread):
         # Signal handler thread infrastructure, which updates the control dictionary with the signal_stop flag if a SIGINT is received 
         # and with the pause flag if a SIGTSTP is received. The thread runs until the monitoring process should stop according to the 
         # control dictionary.
-        #
-        # Funtions for determining whether the monitoring process should stop according to the reception of signals SIGINT and SIGTSTP.
-        @staticmethod
         def _check_signals():
-            while not control["should_stop"]():
-                # Handle SIGINT.
-                if self._signal_flags["stop"]:
+            # Handle SIGINT.
+            if self._signal_flags["stop"].is_set():
+                logger.info("SIGINT received. Stopping the event reception process.")
+                control["signal_stop"] = True
+            # Handle SIGTSTP.
+            if self._signal_flags["pause"].is_set():
+                logger.info("SIGTSTP received. Pausing the event reception process.")
+                while self._signal_flags["pause"].is_set() and not self._signal_flags["stop"].is_set():
+                    time.sleep(1/1000)  # Efficiently wait for signals.
+                if self._signal_flags["stop"].is_set():
                     logger.info("SIGINT received. Stopping the event reception process.")
                     control["signal_stop"] = True
-                # Handle SIGTSTP.
-                if self._signal_flags["pause"]:
-                    logger.info("SIGTSTP received. Pausing the event reception process.")
-                    while self._signal_flags["pause"] and not self._signal_flags["stop"]:
-                        time.sleep(1)  # Efficiently wait for signals.
-                    if self._signal_flags["stop"]:
-                        logger.info("SIGINT received. Stopping the event reception process.")
-                        control["signal_stop"] = True
-                    if not self._signal_flags["pause"]:
-                        logger.info("SIGTSTP received. Resuming the event reception process.")
-                        control["signal_stop"] = False
-                control["signal_stop"] = False
-                time.sleep(1)  # Sleep to avoid busy waiting.
-
+                if not self._signal_flags["pause"].is_set():
+                    logger.info("SIGTSTP received. Resuming the event reception process.")
+        #
+        # Function for determining whether the monitoring process should stop according to the reception of signals SIGINT and SIGTSTP.
+        # def _check_signals():
+        #     while not control["should_stop"]():
+        #         # Handle SIGINT.
+        #         if self._signal_flags["stop"].is_set():
+        #             logger.info("SIGINT received. Stopping the event reception process.")
+        #             control["signal_stop"] = True
+        #         # Handle SIGTSTP.
+        #         if self._signal_flags["pause"].is_set():
+        #             logger.info("SIGTSTP received. Pausing the event reception process.")
+        #             while self._signal_flags["pause"].is_set() and not self._signal_flags["stop"].is_set():
+        #                 time.sleep(1/1000)  # Efficiently wait for signals.
+        #             if self._signal_flags["stop"].is_set():
+        #                 logger.info("SIGINT received. Stopping the event reception process.")
+        #                 control["signal_stop"] = True
+        #             if not self._signal_flags["pause"].is_set():
+        #                 logger.info("SIGTSTP received. Resuming the event reception process.")
+        #         time.sleep(1/1000)  # Sleep to avoid busy waiting.
+        # 
         # Create the signal handler thread.
-        signal_thread = threading.Thread(
-            target=_check_signals,
-            args=(),
-            daemon=True
-        )
+        # signal_thread = threading.Thread(
+        #     target=_check_signals,
+        #     args=(),
+        #     daemon=True
+        # )
         # -- END of signal handler thread infrastructure
 
         # Timeout checker thread infrastructure, which updates the control dictionary with the timeout_stop flag if the time elapsed since 
@@ -95,37 +107,50 @@ class Reporter(threading.Thread):
         #
         # Function for determining whether the monitoring process should stop according to the timeout of message reception from the RabbitMQ 
         # server.
-        @staticmethod
         def _check_timeout():
-            while not control["should_stop"]():
-                if 0 < config.timeout < (time.time() - start_time_epoch):
-                    control["timeout_stop"] = True
-                time.sleep(1)  # Sleep to avoid busy waiting
-
+            if 0 < config.timeout < (time.time() - start_time_epoch):
+                control["timeout_stop"] = True
+                logger.info("Timeout reached. Stopping the event reception process.")
+        # 
+        # def _check_timeout():
+        #     while not control["should_stop"]():
+        #         if 0 < config.timeout < (time.time() - start_time_epoch):
+        #             control["timeout_stop"] = True
+        #             logger.info("Timeout reached. Stopping the event reception process.")
+        #         time.sleep(1/1000)  # Sleep to avoid busy waiting.
+        # 
         # Create the timeout checker thread.
-        timeout_thread = threading.Thread(
-            target=_check_timeout,
-            args=(),
-            daemon=True
-        )
+        # timeout_thread = threading.Thread(
+        #     target=_check_timeout,
+        #     args=(),
+        #     daemon=True
+        # )
         # -- END of timeout checker thread infrastructure
 
         # Start the threads for checking signals, timeout and verdicts for determining termination of the monitoring process.
         #
         # Start the thread checking signals.
-        signal_thread.start()
+        # signal_thread.start()
         # Start the thread checking timeout.
-        timeout_thread.start()
+        # timeout_thread.start()
 
         # Log the start of the sending of events to the RabbitMQ server.
         #
-        # Start receiving events from the RabbitMQ server
+        # Start receiving events from the RabbitMQ server.
         logger.info(f"Start sending events to exchange {rabbitmq_server_connections.rabbitmq_events_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_events_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_events_server_connection.server_info.port}.")
 
         # Main loop of the acquiring events from the SUT and sending events to the RabbitMQ server and processes them until the 
         # control dictionary indicates that the monitoring process should stop.
         while not control["should_stop"]():
-            # Process packages from communication channel
+            # Update termination conditions.
+            _check_signals()
+            _check_timeout()
+            # Process packages from communication channel with the SUT, which are read from the stdout of the 
+            # subprocess that executes the SUT, and send events to the RabbitMQ server. Each package is composed 
+            # of an unsigned long long (8 bytes) for the timestamp, an unsigned long (4 bytes) for the event type, 
+            # and a string (1012 bytes) for the data; thus, each package has a total size of 1024 bytes. The 
+            # number of packages read from the communication channel at each iteration is determined by the 
+            # capacity parameter of the CommunicationChannelConf class.
             buffer = self._sut_pipe_channel.stdout.read(self._channel_conf.capacity * self._channel_conf.max_pkg_size)
             pkgs = [
                 buffer[i : i + self._channel_conf.max_pkg_size]
@@ -161,45 +186,45 @@ class Reporter(threading.Thread):
                     try:
                         event_dict = EventDictCoDec.to_dict(event)
                     except EventTypeError:
-                        logger.error(
-                            f"Error building dictionary from event: [ {event} ]."
-                        )
+                        logger.error(f"Error building dictionary from event: [ {event} ].")
                         raise ReporterError()
                     try:
                         rabbitmq_server_connections.rabbitmq_events_server_connection.publish_message(
                             json.dumps(event_dict, indent=4),
                             pika.BasicProperties(
-                                delivery_mode=2,  # Persistent message
+                                delivery_mode=2,  # Persistent message.
                             ),
                         )
                     except RabbitMQError:
-                        logger.error(
-                            f"Error sending event to the exchange {rabbitmq_server_connections.rabbitmq_events_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_events_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_events_server_connection.server_info.port}."
-                        )
+                        logger.error(f"Error sending event to the exchange {rabbitmq_server_connections.rabbitmq_events_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_events_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_events_server_connection.server_info.port}.")
                         raise ReporterError()
                     else:
                         # Log event send
                         logger.debug(f"Sent event: {event_dict}.")
-                        # Only increment number_of_events is it is a valid event
+                        # Only increment number_of_events is it is a valid event.
                         number_of_events += 1
                         time.sleep(1 / 100000)
                 else:
-                    # Log invalid event
+                    # Log invalid event.
                     logger.error(f"Invalid event type: {event_type} with data: {data_string}.")
             
         # Log the stop of the sending of events to the RabbitMQ server.
         #
-        # Send poison pill with the events routing_key to the RabbitMQ server
+        # Send poison pill with the events routing_key to the RabbitMQ server.
         try:
             rabbitmq_server_connections.rabbitmq_events_server_connection.publish_message(
-                "", pika.BasicProperties(delivery_mode=2, headers={"termination": True})
+                "", 
+                pika.BasicProperties(
+                    delivery_mode=2, 
+                    headers={"termination": True}
+                )
             )
         except RabbitMQError:
             logger.error(f"Error sending poison pill to the exchange {rabbitmq_server_connections.rabbitmq_events_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_events_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_events_server_connection.server_info.port}.")
             raise ReporterError()
         else:
             logger.info(f"Poison pill sent to the exchange {rabbitmq_server_connections.rabbitmq_events_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_events_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_events_server_connection.server_info.port}.")
-        # Stop publishing events to the RabbitMQ server
+        # Stop publishing events to the RabbitMQ server.
         logger.info(f"Stop sending events to the exchange {rabbitmq_server_connections.rabbitmq_events_server_connection.exchange} at the RabbitMQ server at {rabbitmq_server_connections.rabbitmq_events_server_connection.server_info.host}:{rabbitmq_server_connections.rabbitmq_events_server_connection.server_info.port}.")
 
         # Logging the reason for stoping the acquisition process.
@@ -215,6 +240,6 @@ class Reporter(threading.Thread):
         # monitoring process should stop.
         #
         # Wait for the thread checking signals to finish.
-        signal_thread.join(timeout=5)
+        # signal_thread.join(timeout=5)
         # Wait for the thread checking timeout to finish.
-        timeout_thread.join(timeout=5)
+        # timeout_thread.join(timeout=5)
